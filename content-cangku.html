@@ -1102,8 +1102,6 @@ document.addEventListener('DOMContentLoaded', () => {
   var head = win.querySelector('.pinwin-head'), close = win.querySelector('.pinwin-close'), rs = win.querySelector('.pinwin-rs');
   var open = false, hovered = false;
   function refresh(){ panel.classList.toggle('apin-highlight', open || hovered); }
-  panel.addEventListener('mouseenter', function(){ hovered = true; refresh(); });
-  panel.addEventListener('mouseleave', function(){ hovered = false; refresh(); });
   dot.addEventListener('mouseenter', function(){ hovered = true; refresh(); });
   dot.addEventListener('mouseleave', function(){ hovered = false; refresh(); });
   function position(){
@@ -1206,8 +1204,6 @@ document.addEventListener('DOMContentLoaded', () => {
   var head = win.querySelector('.pinwin-head'), close = win.querySelector('.pinwin-close'), rs = win.querySelector('.pinwin-rs');
   var open = false, hovered = false;
   function refresh(){ area.classList.toggle('card-highlight', open || hovered); }
-  area.addEventListener('mouseenter', function(){ hovered = true; refresh(); });
-  area.addEventListener('mouseleave', function(){ hovered = false; refresh(); });
   dot.addEventListener('mouseenter', function(){ hovered = true; refresh(); });
   dot.addEventListener('mouseleave', function(){ hovered = false; refresh(); });
   function position(){
