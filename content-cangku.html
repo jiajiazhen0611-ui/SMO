@@ -298,7 +298,7 @@ body {
   tbody tr.row-main td:nth-child(3) .f-label{flex-basis:7em}  /* 商品名称列：中文/英文商品名称：=7字 */
   tbody tr.row-main td:nth-child(4) .f-label{flex-basis:6em}  /* 商品编码列：自定义编码：=6字 */
   tbody tr.row-main td:nth-child(5) .f-label{flex-basis:3em}  /* 商品属性列：品类：/货值：=3字 */
-  tbody tr.row-main td:nth-child(6) .f-label{flex-basis:5em}  /* 规格信息列：预报尺寸：等=5字 */
+  tbody tr.row-main td:nth-child(6) .f-label{flex-basis:8em}  /* 规格信息列：预报尺寸/重量：=8字 */
   tbody tr.row-main td:nth-child(2){min-width:0}
   .action-btns{display:flex;gap:8px;justify-content:flex-end}
   .abtn{padding:3px 12px;border-radius:var(--radius-sm);font-size:12px;font-weight:400;transition:all .2s}
@@ -466,12 +466,12 @@ body {
 
     <div class="proto-desc doc-section" data-proto-desc="3">
       <div class="doc-label"><span class="doc-num">3</span> 字段冒号对齐</div>
-      <div class="doc-desc">字段标签右对齐 + 固定宽度 = 该列最长字段名（含冒号）；最长标签左缘与列标题左缘对齐，短标签靠右收齐，保证冒号上下垂直对齐。各列通过 nth-child 单独覆盖标签宽度（如 中文商品名称：7em、自定义编码：6em、品类：3em、预报尺寸：5em）。</div>
+      <div class="doc-desc">字段标签右对齐 + 固定宽度 = 该列最长字段名（含冒号）；最长标签左缘与列标题左缘对齐，短标签靠右收齐，保证冒号上下垂直对齐。各列通过 nth-child 单独覆盖标签宽度（如 中文商品名称：7em、自定义编码：6em、品类：3em、预报尺寸/重量：8em）。</div>
     </div>
 
     <div class="proto-desc doc-section" data-proto-desc="4">
       <div class="doc-label"><span class="doc-num">4</span> 公制单位</div>
-      <div class="doc-desc">尺寸与重量统一以「公制」单位展示（如 120*40*80 公制 / 0.25 公制）。区分预报值与实际值，便于核对海外仓入库实测与申报差异。</div>
+      <div class="doc-desc">规格信息按 预报 / 实际 / 平均 三行展示，每行尺寸与重量同行（如 120 × 40 × 80 / 0.25 公制，重量单位统一「公制」）。区分预报、实际与平均值，便于核对海外仓入库实测与申报差异。</div>
     </div>
 
     <div class="proto-desc doc-section" data-proto-desc="5">
@@ -653,12 +653,12 @@ if(window.ResizeObserver){ new ResizeObserver(postHeight).observe(document.body)
 <!-- ===================== 页面逻辑（仓库商品数据 + 渲染 + 交互） ===================== -->
 <script>
 const TABLE_DATA = [
-  { warehouseCode:'USLAX09', cnName:'纯棉白色圆领T恤', enName:'Cotton White Crew Neck T-Shirt', cnDeclare:'棉制针织上衣', enDeclare:'Knitted Cotton Top', productCode:'PROD-001', customCode:'CUSTOM-001', platformCode:'AMZ-US', sku:'SKU001', category:'上衣', value:'123 USD', forecastSize:'120 * 40 * 80 公制', forecastWeight:'0.25 公制', actualSize:'122 * 41 * 82 公制', actualWeight:'0.26 公制' },
-  { warehouseCode:'USLAX09', cnName:'直筒牛仔裤', enName:'Straight Leg Denim Jeans', cnDeclare:'棉制长裤', enDeclare:'Cotton Trousers', productCode:'PROD-002', customCode:'CUSTOM-002', platformCode:'AMZ-US', sku:'SKU002', category:'下装', value:'—', forecastSize:'85 * 35 * 105 公制', forecastWeight:'0.65 公制', actualSize:'86 * 36 * 106 公制', actualWeight:'0.67 公制' },
-  { warehouseCode:'USNJ07', cnName:'无线蓝牙耳机', enName:'Wireless Bluetooth Earbuds', cnDeclare:'蓝牙耳机', enDeclare:'Bluetooth Earphone', productCode:'PROD-003', customCode:'CUSTOM-003', platformCode:'EBAY-EU', sku:'SKU003', category:'数码配件', value:'56 USD', forecastSize:'8 * 6 * 3 公制', forecastWeight:'0.08 公制', actualSize:'8 * 6 * 3 公制', actualWeight:'0.085 公制' },
-  { warehouseCode:'USNJ07', cnName:'不锈钢保温杯', enName:'Stainless Steel Thermos', cnDeclare:'不锈钢保温容器', enDeclare:'Stainless Steel Bottle', productCode:'PROD-004', customCode:'CUSTOM-004', platformCode:'WISH-GL', sku:'SKU004', category:'家居用品', value:'18 USD', forecastSize:'8 * 8 * 24 公制', forecastWeight:'0.33 公制', actualSize:'8 * 8 * 25 公制', actualWeight:'0.35 公制' },
-  { warehouseCode:'USGA12', cnName:'折叠雨伞', enName:'Compact Folding Umbrella', cnDeclare:'折叠伞', enDeclare:'Folding Umbrella', productCode:'PROD-005', customCode:'CUSTOM-005', platformCode:'AMZ-CA', sku:'SKU005', category:'户外用品', value:'12 USD', forecastSize:'5 * 5 * 28 公制', forecastWeight:'0.38 公制', actualSize:'5 * 5 * 29 公制', actualWeight:'0.39 公制' },
-  { warehouseCode:'USTX03', cnName:'帆布双肩包', enName:'Canvas Backpack', cnDeclare:'帆布包', enDeclare:'Canvas Bag', productCode:'PROD-006', customCode:'CUSTOM-006', platformCode:'EBAY-UK', sku:'SKU006', category:'箱包', value:'35 USD', forecastSize:'29 * 14 * 44 公制', forecastWeight:'0.85 公制', actualSize:'30 * 15 * 45 公制', actualWeight:'0.88 公制' },
+  { warehouseCode:'USLAX09', cnName:'纯棉白色圆领T恤', enName:'Cotton White Crew Neck T-Shirt', cnDeclare:'棉制针织上衣', enDeclare:'Knitted Cotton Top', productCode:'PROD-001', customCode:'CUSTOM-001', platformCode:'AMZ-US', sku:'SKU001', category:'上衣', value:'123 USD', specForecast:'120 × 40 × 80 / 0.25 公制', specActual:'122 × 41 × 82 / 0.26 公制', specAverage:'121 × 40 × 81 / 0.26 公制' },
+  { warehouseCode:'USLAX09', cnName:'直筒牛仔裤', enName:'Straight Leg Denim Jeans', cnDeclare:'棉制长裤', enDeclare:'Cotton Trousers', productCode:'PROD-002', customCode:'CUSTOM-002', platformCode:'AMZ-US', sku:'SKU002', category:'下装', value:'—', specForecast:'85 × 35 × 105 / 0.65 公制', specActual:'86 × 36 × 106 / 0.67 公制', specAverage:'86 × 36 × 106 / 0.66 公制' },
+  { warehouseCode:'USNJ07', cnName:'无线蓝牙耳机', enName:'Wireless Bluetooth Earbuds', cnDeclare:'蓝牙耳机', enDeclare:'Bluetooth Earphone', productCode:'PROD-003', customCode:'CUSTOM-003', platformCode:'EBAY-EU', sku:'SKU003', category:'数码配件', value:'56 USD', specForecast:'8 × 6 × 3 / 0.08 公制', specActual:'8 × 6 × 3 / 0.085 公制', specAverage:'8 × 6 × 3 / 0.08 公制' },
+  { warehouseCode:'USNJ07', cnName:'不锈钢保温杯', enName:'Stainless Steel Thermos', cnDeclare:'不锈钢保温容器', enDeclare:'Stainless Steel Bottle', productCode:'PROD-004', customCode:'CUSTOM-004', platformCode:'WISH-GL', sku:'SKU004', category:'家居用品', value:'18 USD', specForecast:'8 × 8 × 24 / 0.33 公制', specActual:'8 × 8 × 25 / 0.35 公制', specAverage:'8 × 8 × 25 / 0.34 公制' },
+  { warehouseCode:'USGA12', cnName:'折叠雨伞', enName:'Compact Folding Umbrella', cnDeclare:'折叠伞', enDeclare:'Folding Umbrella', productCode:'PROD-005', customCode:'CUSTOM-005', platformCode:'AMZ-CA', sku:'SKU005', category:'户外用品', value:'12 USD', specForecast:'5 × 5 × 28 / 0.38 公制', specActual:'5 × 5 × 29 / 0.39 公制', specAverage:'5 × 5 × 29 / 0.39 公制' },
+  { warehouseCode:'USTX03', cnName:'帆布双肩包', enName:'Canvas Backpack', cnDeclare:'帆布包', enDeclare:'Canvas Bag', productCode:'PROD-006', customCode:'CUSTOM-006', platformCode:'EBAY-UK', sku:'SKU006', category:'箱包', value:'35 USD', specForecast:'29 × 14 × 44 / 0.85 公制', specActual:'30 × 15 × 45 / 0.88 公制', specAverage:'30 × 15 × 45 / 0.87 公制' },
 ];
 const TOTAL = 56, PAGE_SIZE = 20, TOTAL_PAGES = Math.ceil(TOTAL / PAGE_SIZE);
 
@@ -685,10 +685,9 @@ function renderTable(){
         <div class="field"><span class="f-label">货值：</span><span class="f-val">${row.value||'—'}</span></div>
       </td>
       <td>
-        <div class="field"><span class="f-label">预报尺寸：</span><span class="f-val">${row.forecastSize||'—'}</span></div>
-        <div class="field"><span class="f-label">预报重量：</span><span class="f-val">${row.forecastWeight||'—'}</span></div>
-        <div class="field"><span class="f-label">实际尺寸：</span><span class="f-val">${row.actualSize||'—'}</span></div>
-        <div class="field"><span class="f-label">实际重量：</span><span class="f-val">${row.actualWeight||'—'}</span></div>
+        <div class="field"><span class="f-label">预报尺寸/重量：</span><span class="f-val">${row.specForecast||'—'}</span></div>
+        <div class="field"><span class="f-label">实际尺寸/重量：</span><span class="f-val">${row.specActual||'—'}</span></div>
+        <div class="field"><span class="f-label">平均尺寸/重量：</span><span class="f-val">${row.specAverage||'—'}</span></div>
       </td>
     </tr>
     <tr class="gap"><td colspan="6"></td></tr>`
@@ -731,10 +730,9 @@ function openDrawer(sku){
       <div class="dfield"><span class="dfield-label">货值</span><span class="dfield-value">${row.value||'—'}</span></div>
     </div>
     <div><div class="dsec-title">规格信息</div>
-      <div class="dfield"><span class="dfield-label">预报尺寸</span><span class="dfield-value">${row.forecastSize||'—'}</span></div>
-      <div class="dfield"><span class="dfield-label">预报重量</span><span class="dfield-value">${row.forecastWeight||'—'}</span></div>
-      <div class="dfield"><span class="dfield-label">实际尺寸</span><span class="dfield-value">${row.actualSize||'—'}</span></div>
-      <div class="dfield"><span class="dfield-label">实际重量</span><span class="dfield-value">${row.actualWeight||'—'}</span></div>
+      <div class="dfield"><span class="dfield-label">预报尺寸/重量</span><span class="dfield-value">${row.specForecast||'—'}</span></div>
+      <div class="dfield"><span class="dfield-label">实际尺寸/重量</span><span class="dfield-value">${row.specActual||'—'}</span></div>
+      <div class="dfield"><span class="dfield-label">平均尺寸/重量</span><span class="dfield-value">${row.specAverage||'—'}</span></div>
     </div>`;
   document.getElementById('overlay').classList.add('open');
   document.getElementById('drawer').classList.add('open');
