@@ -1109,7 +1109,12 @@ document.addEventListener('DOMContentLoaded', () => {
   win.innerHTML = '<div class="pinwin-head"><span class="pinwin-title">' + cfg.title + '</span><button class="pinwin-close" title="关闭">×</button></div><div class="pinwin-body">' + rows + '</div><div class="pinwin-rs" title="拖拽右下角缩放"></div>';
   document.body.appendChild(win);
   var head = win.querySelector('.pinwin-head'), close = win.querySelector('.pinwin-close'), rs = win.querySelector('.pinwin-rs');
-  var open = false;
+  var open = false, hovered = false;
+  function refresh(){ panel.classList.toggle('apin-highlight', open || hovered); }
+  panel.addEventListener('mouseenter', function(){ hovered = true; refresh(); });
+  panel.addEventListener('mouseleave', function(){ hovered = false; refresh(); });
+  dot.addEventListener('mouseenter', function(){ hovered = true; refresh(); });
+  dot.addEventListener('mouseleave', function(){ hovered = false; refresh(); });
   function position(){
     var p = panel.getBoundingClientRect();
     var w = win.offsetWidth || 470, h = win.offsetHeight || 240;
@@ -1118,13 +1123,9 @@ document.addEventListener('DOMContentLoaded', () => {
     win.style.left = L + 'px'; win.style.top = T + 'px';
   }
   function toggle(){
-    if(open){
-      win.style.display = 'none'; open = false;
-      panel.classList.remove('apin-highlight');
-      return;
-    }
-    win.style.display = 'flex'; position(); open = true;
-    panel.classList.add('apin-highlight');
+    if(open){ win.style.display = 'none'; open = false; }
+    else { win.style.display = 'flex'; position(); open = true; }
+    refresh();
   }
   dot.addEventListener('click', toggle);
   close.addEventListener('click', toggle);
@@ -1214,7 +1215,12 @@ document.addEventListener('DOMContentLoaded', () => {
   win.innerHTML = '<div class="pinwin-head"><span class="pinwin-title">' + cfg.title + '</span><button class="pinwin-close" title="关闭">×</button></div><div class="pinwin-body">' + rows + '</div><div class="pinwin-rs" title="拖拽右下角缩放"></div>';
   document.body.appendChild(win);
   var head = win.querySelector('.pinwin-head'), close = win.querySelector('.pinwin-close'), rs = win.querySelector('.pinwin-rs');
-  var open = false;
+  var open = false, hovered = false;
+  function refresh(){ area.classList.toggle('card-highlight', open || hovered); }
+  area.addEventListener('mouseenter', function(){ hovered = true; refresh(); });
+  area.addEventListener('mouseleave', function(){ hovered = false; refresh(); });
+  dot.addEventListener('mouseenter', function(){ hovered = true; refresh(); });
+  dot.addEventListener('mouseleave', function(){ hovered = false; refresh(); });
   function position(){
     var a = area.getBoundingClientRect();
     var w = win.offsetWidth || 470, h = win.offsetHeight || 260;
@@ -1223,13 +1229,9 @@ document.addEventListener('DOMContentLoaded', () => {
     win.style.left = L + 'px'; win.style.top = T + 'px';
   }
   function toggle(){
-    if(open){
-      win.style.display = 'none'; open = false;
-      area.classList.remove('card-highlight');
-      return;
-    }
-    win.style.display = 'flex'; position(); open = true;
-    area.classList.add('card-highlight');
+    if(open){ win.style.display = 'none'; open = false; }
+    else { win.style.display = 'flex'; position(); open = true; }
+    refresh();
   }
   dot.addEventListener('click', toggle);
   close.addEventListener('click', toggle);
