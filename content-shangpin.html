@@ -1153,5 +1153,110 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 })();
 </script>
+<style>
+/* ===== 卡片区 Pin（浅绿 PRD）：点击后卡片区外围同色高亮 ===== */
+#apin-card{position:absolute;z-index:121;width:40px;height:40px;border-radius:50%;background:#e9f9ee;color:#237804;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;letter-spacing:.5px;cursor:pointer;box-shadow:0 2px 10px rgba(82,196,26,.4);border:2px solid #52c41a;user-select:none;transition:transform .15s,background .15s}
+#apin-card:hover{transform:scale(1.12);background:#d9f4e3}
+.table-panel.card-highlight{box-shadow:0 0 0 2px #52c41a,0 0 22px rgba(82,196,26,.5)!important}
+.pinwin.theme-green .pinwin-head{background:#52c41a}
+.pinwin.theme-green .psec-title .n{background:#52c41a}
+.pinwin.theme-green .pinwin-rs{background:linear-gradient(135deg,transparent 55%,rgba(82,196,26,.6) 55%)}
+</style>
+<script>
+/* ===== 卡片区单 Pin + 浮窗（内容：标题 / 操作按钮 / 状态说明） ===== */
+(function(){
+  var cfg = {
+    title: '卡片区说明',
+    titles: [
+      ['商品列表（卡片式行）', '每行 = 一张商品卡片：右上角状态角标 + 勾选 + 多组字段行 + 操作列'],
+      ['顶部统计卡', '按状态汇总数量（草稿/待审核/已审核/已驳回/已废弃）']
+    ],
+    buttons: [
+      ['添加', '启用', '新增商品，打开录入（演示占位）'],
+      ['导入', '启用', 'Excel 批量导入商品（演示占位）'],
+      ['导出', '启用', '将当前列表导出（演示占位）'],
+      ['废弃', '勾选后启用', '批量废弃所选商品（红色危险操作，演示占位）'],
+      ['详情（行内链接）', '启用', '打开右侧抽屉查看完整信息（只读，最高频操作）']
+    ],
+    statuses: [
+      ['草稿（蓝）', '新建未提交，可编辑'],
+      ['待审核（橙）', '已提交待审，锁定不可修改'],
+      ['已审核（绿）', '审核通过，进入可用状态'],
+      ['已驳回（红）', '审核退回，修改后重新提交'],
+      ['已废弃（灰）', '作废不参与业务']
+    ]
+  };
+  var app = document.getElementById('appContainer');
+  var area = document.querySelector('.table-panel');
+  if(!app || !area) return;
+  var dot = document.createElement('div');
+  dot.id = 'apin-card'; dot.title = cfg.title; dot.textContent = 'PRD';
+  app.appendChild(dot);
+  var toolbar = area.querySelector('.table-toolbar') || area;
+  function posDot(){
+    var c = app.getBoundingClientRect(), h = toolbar.getBoundingClientRect();
+    dot.style.left = Math.round(h.right - c.left + 6) + 'px';
+    dot.style.top = Math.round(h.top - c.top + h.height / 2 - 20) + 'px';
+  }
+  posDot(); window.addEventListener('resize', posDot);
+  var win = document.createElement('div'); win.className = 'pinwin theme-green'; win.style.display = 'none';
+  var rows = '';
+  rows += '<div class="psec"><div class="psec-title"><span class="n">1</span>标题</div>';
+  rows += '<div class="prow prow2 head"><span>标题</span><span>说明</span></div>';
+  cfg.titles.forEach(function(r){ rows += '<div class="prow prow2"><span>' + r[0] + '</span><span>' + r[1] + '</span></div>'; });
+  rows += '</div><div class="psec"><div class="psec-title"><span class="n">2</span>操作按钮</div>';
+  rows += '<div class="prow prow3 head"><span>按钮</span><span>状态</span><span>说明</span></div>';
+  cfg.buttons.forEach(function(r){ rows += '<div class="prow prow3"><span>' + r[0] + '</span><span>' + r[1] + '</span><span>' + r[2] + '</span></div>'; });
+  rows += '</div><div class="psec"><div class="psec-title"><span class="n">3</span>状态说明</div>';
+  rows += '<div class="prow prow2 head"><span>状态名</span><span>说明</span></div>';
+  cfg.statuses.forEach(function(r){ rows += '<div class="prow prow2"><span>' + r[0] + '</span><span>' + r[1] + '</span></div>'; });
+  rows += '</div>';
+  win.innerHTML = '<div class="pinwin-head"><span class="pinwin-title">' + cfg.title + '</span><button class="pinwin-close" title="关闭">×</button></div><div class="pinwin-body">' + rows + '</div><div class="pinwin-rs" title="拖拽右下角缩放"></div>';
+  document.body.appendChild(win);
+  var head = win.querySelector('.pinwin-head'), close = win.querySelector('.pinwin-close'), rs = win.querySelector('.pinwin-rs');
+  var open = false;
+  function position(){
+    var a = area.getBoundingClientRect();
+    var w = win.offsetWidth || 470, h = win.offsetHeight || 260;
+    var L = Math.min(a.right + 8, window.innerWidth - w - 12); L = Math.max(8, L);
+    var T = Math.min(a.top + 40, window.innerHeight - h - 12); T = Math.max(8, T);
+    win.style.left = L + 'px'; win.style.top = T + 'px';
+  }
+  function toggle(){
+    if(open){
+      win.style.display = 'none'; open = false;
+      area.classList.remove('card-highlight');
+      return;
+    }
+    win.style.display = 'flex'; position(); open = true;
+    area.classList.add('card-highlight');
+  }
+  dot.addEventListener('click', toggle);
+  close.addEventListener('click', toggle);
+  function drag(e){
+    if(e.target.closest('.pinwin-close')) return;
+    var sx = e.clientX, sy = e.clientY, oL = win.offsetLeft, oT = win.offsetTop;
+    function mv(ev){
+      var L = Math.min(Math.max(ev.clientX - sx + oL, -win.offsetWidth + 90), window.innerWidth - 40);
+      var T = Math.min(Math.max(ev.clientY - sy + oT, 0), window.innerHeight - 40);
+      win.style.left = L + 'px'; win.style.top = T + 'px';
+    }
+    function up(){ document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); }
+    document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
+  }
+  head.addEventListener('mousedown', drag);
+  rs.addEventListener('mousedown', function(e){
+    e.preventDefault(); e.stopPropagation();
+    var sx = e.clientX, sy = e.clientY, ow = win.offsetWidth, oh = win.offsetHeight;
+    function mv2(ev){
+      var w = Math.max(300, ow + ev.clientX - sx), h = Math.max(220, oh + ev.clientY - sy);
+      w = Math.min(w, window.innerWidth - 24); h = Math.min(h, window.innerHeight - 24);
+      win.style.width = w + 'px'; win.style.height = h + 'px';
+    }
+    function up2(){ document.removeEventListener('mousemove', mv2); document.removeEventListener('mouseup', up2); }
+    document.addEventListener('mousemove', mv2); document.addEventListener('mouseup', up2);
+  });
+})();
+</script>
 </body>
 </html>
