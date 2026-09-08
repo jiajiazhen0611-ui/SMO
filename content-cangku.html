@@ -1037,24 +1037,25 @@ document.addEventListener('DOMContentLoaded', () => {
 /* ===== 搜索区 Pin 浮窗（LC-OMS 新标注模型）：可缩放 / 移动 / 关闭 ===== */
 #appContainer{position:relative}
 .pin-overlay,.doc-fab,.doc-bubble,.doc-list,.doc-panel,.pin-toggle{display:none!important}
-#apin-search{position:absolute;z-index:120;width:26px;height:26px;border-radius:50%;background:#1677ff;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(22,119,255,.45);border:2px solid #fff;user-select:none;transition:transform .15s}
-#apin-search:hover{transform:scale(1.15)}
+#apin-search{position:absolute;z-index:120;width:40px;height:40px;border-radius:50%;background:#ede9fe;color:#7c3aed;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;letter-spacing:.5px;cursor:pointer;box-shadow:0 2px 10px rgba(139,92,246,.4);border:2px solid #a78bfa;user-select:none;transition:transform .15s,background .15s}
+#apin-search:hover{transform:scale(1.12);background:#ddd6fe}
+.filter-panel.apin-highlight{box-shadow:0 0 0 2px #a78bfa,0 0 22px rgba(139,92,246,.5)!important}
 .pinwin{position:fixed;z-index:400;width:470px;min-width:300px;min-height:180px;background:#fff;border:1px solid #e5e6eb;border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.16);display:flex;flex-direction:column;font-size:13px;color:#1d2129;overflow:hidden}
-.pinwin-head{display:flex;align-items:center;gap:8px;padding:9px 10px 9px 14px;background:#1677ff;color:#fff;cursor:move;user-select:none;flex-shrink:0}
+.pinwin-head{display:flex;align-items:center;gap:8px;padding:9px 10px 9px 14px;background:#8b5cf6;color:#fff;cursor:move;user-select:none;flex-shrink:0}
 .pinwin-title{font-weight:600;font-size:13.5px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pinwin-close{width:22px;height:22px;border:none;background:rgba(255,255,255,.18);color:#fff;border-radius:6px;cursor:pointer;font-size:14px;line-height:1;display:grid;place-items:center;flex-shrink:0}
 .pinwin-close:hover{background:rgba(255,255,255,.32)}
 .pinwin-body{overflow:auto;padding:8px 14px 14px;flex:1}
 .psec{margin-bottom:12px}
 .psec-title{font-weight:600;font-size:13px;color:#1d2129;margin:6px 0 8px;display:flex;align-items:center}
-.psec-title .n{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#1677ff;color:#fff;font-size:11px;font-weight:700;margin-right:6px;flex-shrink:0}
+.psec-title .n{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#8b5cf6;color:#fff;font-size:11px;font-weight:700;margin-right:6px;flex-shrink:0}
 .prow{display:grid;gap:10px;align-items:center;padding:5px 8px;border-radius:6px}
 .prow3{grid-template-columns:minmax(120px,1.1fr) minmax(104px,.9fr) 2fr}
 .prow2{grid-template-columns:minmax(120px,1fr) 2.2fr}
 .prow.head{background:#fafbfc;color:#86909c;font-size:12px;font-weight:500}
 .prow>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .prow:not(.head):hover{background:#f7f9fc}
-.pinwin-rs{position:absolute;right:0;bottom:0;width:16px;height:16px;cursor:nwse-resize;background:linear-gradient(135deg,transparent 55%,rgba(22,119,255,.55) 55%)}
+.pinwin-rs{position:absolute;right:0;bottom:0;width:16px;height:16px;cursor:nwse-resize;background:linear-gradient(135deg,transparent 55%,rgba(139,92,246,.6) 55%)}
 </style>
 <script>
 /* ===== 搜索区单 Pin + 浮窗（旧多 Pin / FAB / 说明清单整组停用） ===== */
@@ -1079,12 +1080,12 @@ document.addEventListener('DOMContentLoaded', () => {
   var panel = document.querySelector('.filter-panel');
   if(!app || !panel) return;
   var dot = document.createElement('div');
-  dot.id = 'apin-search'; dot.title = cfg.title; dot.textContent = '搜';
+  dot.id = 'apin-search'; dot.title = cfg.title; dot.textContent = 'PRD';
   app.appendChild(dot);
   function posDot(){
     var c = app.getBoundingClientRect(), p = panel.getBoundingClientRect();
     dot.style.left = Math.round(p.right - c.left + 6) + 'px';
-    dot.style.top = Math.round(p.top - c.top + p.height / 2 - 13) + 'px';
+    dot.style.top = Math.round(p.top - c.top + p.height / 2 - 20) + 'px';
   }
   posDot(); window.addEventListener('resize', posDot);
   var win = document.createElement('div'); win.className = 'pinwin'; win.style.display = 'none';
@@ -1108,8 +1109,13 @@ document.addEventListener('DOMContentLoaded', () => {
     win.style.left = L + 'px'; win.style.top = T + 'px';
   }
   function toggle(){
-    if(open){ win.style.display = 'none'; open = false; return; }
+    if(open){
+      win.style.display = 'none'; open = false;
+      panel.classList.remove('apin-highlight');
+      return;
+    }
     win.style.display = 'flex'; position(); open = true;
+    panel.classList.add('apin-highlight');
   }
   dot.addEventListener('click', toggle);
   close.addEventListener('click', toggle);
