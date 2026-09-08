@@ -211,11 +211,26 @@ body {
   .input-search{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:18px;height:18px;border:none;background:transparent;cursor:pointer;display:grid;place-items:center;color:var(--text-tertiary);padding:0;line-height:1;transition:color .15s;}
   .input-search:hover{color:var(--primary)}
   .input-search svg{width:14px;height:14px}
-  .f-select{height:32px;border:1px solid var(--border);border-radius:var(--radius-md);padding:0 8px;min-width:80px;font-size:13.5px;outline:none;background:#fff;color:var(--text);cursor:pointer}
-  #weightSelect{border-radius:var(--radius-md) 0 0 var(--radius-md)}
-  .f-select option{color:var(--text)}
-  .f-select option[value=""]{color:var(--text-quaternary)}
-  .f-select:not(:has(option:checked:not([value=""]))){color:var(--text-quaternary)}
+  /* ========== 下拉框：一律 .dd 自定义组件（SKILL「三·补」；原生 <select> 方案已废弃） ========== */
+  /* 独立下拉 .f-select.dd（四角完整圆角） */
+  .f-select.dd{position:relative;display:inline-flex;align-items:center;justify-content:space-between;gap:6px;height:32px;padding:0 10px;min-width:130px;border:1px solid var(--border);border-radius:var(--radius-md);background:#fff;cursor:pointer;user-select:none;font-size:13.5px;flex-shrink:0;transition:border-color .2s}
+  .f-select.dd:hover,.f-select.dd.open{border-color:var(--primary)}
+  .f-select.dd .dd-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-quaternary)}
+  .f-select.dd.has-value .dd-label{color:var(--text)}
+  /* 三角：真实内联 SVG（#4e5969），展开 rotate(180°) 变主蓝 */
+  .dd-arrow{display:grid;place-items:center;color:#4e5969;transition:transform .15s,color .15s;flex-shrink:0}
+  .dd-arrow svg{width:12px;height:12px;display:block}
+  .dd.open .dd-arrow{transform:rotate(180deg);color:var(--primary)}
+  .dd-list{position:absolute;top:calc(100% + 4px);left:0;min-width:100%;background:#fff;border:1px solid var(--border-light);border-radius:var(--radius-md);box-shadow:var(--shadow-dropdown);z-index:310;display:none;overflow:hidden;padding:4px 0}
+  .dd.open .dd-list{display:block}
+  .dd-item{padding:7px 14px;font-size:13.5px;color:var(--text);cursor:pointer;white-space:nowrap;transition:background .15s}
+  .dd-item:hover{background:var(--bg)}
+  .dd-item.active{color:var(--primary);background:var(--primary-bg)}
+  /* 合并式左段（规格维度 ▾）：右直角；与右侧 .range-input（左直角 + margin-left:-7px）紧贴成一条边框，永不分开 */
+  .dc-select.dd{position:relative;display:inline-flex;align-items:center;justify-content:space-between;gap:6px;height:32px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius-md) 0 0 var(--radius-md);background:#fff;cursor:pointer;user-select:none;font-size:13.5px;color:var(--text);flex-shrink:0;transition:border-color .2s}
+  .dc-select.dd:hover,.dc-select.dd.open{border-color:var(--primary)}
+  .dc-select.dd .dd-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}
+  /* 规格维度合并式（毛重/净重/货值/长/宽/高）无提示词：默认选中第一维并黑色显示（.has-value） */
   .range-input{display:inline-flex;align-items:center;gap:4px;flex-shrink:0;height:32px;border:1px solid var(--border);border-radius:0 var(--radius-md) var(--radius-md) 0;background:#fff;padding:0 6px 0 10px;transition:border-color .2s;min-width:160px;margin-left:-7px;}
   .range-input:focus-within{border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-bg)}
   .range-input input{border:none;outline:none;background:transparent;font-size:13.5px;color:var(--text-secondary)!important;min-width:50px;width:70px;padding:0;}
@@ -230,7 +245,6 @@ body {
   .range-btn{margin-left:auto;flex-shrink:0;width:26px;height:26px;border:none;background:transparent;display:grid;place-items:center;cursor:pointer;border-radius:var(--radius-sm);transition:background .15s,color .15s;color:var(--text-secondary);}
   .range-btn:hover{background:var(--primary-bg);color:var(--primary)}
   .range-btn svg{width:14px;height:14px}
-  .f-select::placeholder{color:var(--text-quaternary)}
   .f-date{height:32px;border:1px solid var(--border);border-radius:var(--radius-md);padding:0 8px;min-width:130px;font-size:13.5px;outline:none;background:#fff;color:var(--text);cursor:pointer}
   .btn-primary{height:32px;padding:0 12px;background:var(--primary);color:#fff;border-radius:var(--radius-md);border:1px solid var(--primary);font-weight:400;display:inline-flex;align-items:center;gap:6px;transition:background .2s,border-color .2s}
   .btn-primary:hover{background:var(--primary-hover);border-color:var(--primary-hover)}
@@ -341,7 +355,8 @@ body {
   .dfield{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px dashed var(--border);font-size:13.5px}
   .dfield-label{color:var(--text-tertiary);flex-shrink:0}
   .dfield-value{color:var(--text);font-weight:500;text-align:right;word-break:break-all}
-  .dsec-title{font-size:12px;font-weight:600;color:var(--text-tertiary);letter-spacing:.5px;margin-bottom:10px;text-transform:uppercase}
+  /* 抽屉分区标题条 = 表头风格（SKILL「五·补2」）：#fafbfc 底、13px/500/text-secondary，横贯抽屉内容宽 */
+  .dsec-title{display:block;background:#fafbfc;margin:0 -24px 12px;padding:8px 24px;font-size:13px;font-weight:500;color:var(--text-secondary);letter-spacing:0;text-transform:none;border-radius:var(--radius-sm) var(--radius-sm) 0 0}
 
   /* 原型标注版专属：标注显隐开关 */
   .proto-badge{margin-bottom:14px;padding:10px 12px;background:var(--amber-border);border-radius:6px;display:flex;align-items:center;gap:8px;}
@@ -382,7 +397,16 @@ body {
           <div class="filter-row">
             <div class="input-wrap" style="flex:1.5"><input class="f-input" type="text" placeholder="请输入SKU/自定义编码/平台编码" /><button class="input-clear" aria-label="清除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button><button class="input-search" aria-label="搜索" onclick="doSearch(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></button></div>
             <div class="input-wrap" style="flex:1.3"><input class="f-input" type="text" placeholder="请输入商品名称" /><button class="input-clear" aria-label="清除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button><button class="input-search" aria-label="搜索" onclick="doSearch(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></button></div>
-            <select class="f-select" id="warehouseSelect"><option value="">请选择仓库</option><option>USLAX09</option><option>USNJ07</option><option>USGA12</option><option>USTX03</option></select>
+            <div class="f-select dd" id="warehouseSelect" data-placeholder="请选择仓库">
+              <span class="dd-label">请选择仓库</span>
+              <span class="dd-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+              <div class="dd-list">
+                <div class="dd-item" data-v="USLAX09">USLAX09</div>
+                <div class="dd-item" data-v="USNJ07">USNJ07</div>
+                <div class="dd-item" data-v="USGA12">USGA12</div>
+                <div class="dd-item" data-v="USTX03">USTX03</div>
+              </div>
+            </div>
             <div class="search-select" id="categorySelect">
               <div class="search-select-trigger">
                 <span class="ss-placeholder">请选择商品品类</span>
@@ -401,7 +425,17 @@ body {
                 </div>
               </div>
             </div>
-            <select class="f-select" id="weightSelect"><option value="">重量</option><option value="weight">重量</option><option value="value">货值</option><option value="length">长</option><option value="width">宽</option><option value="height">高</option></select>
+            <div class="dc-select dd has-value" id="weightSelect">
+              <span class="dd-label">重量</span>
+              <span class="dd-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+              <div class="dd-list">
+                <div class="dd-item active" data-v="weight">重量</div>
+                <div class="dd-item" data-v="value">货值</div>
+                <div class="dd-item" data-v="length">长</div>
+                <div class="dd-item" data-v="width">宽</div>
+                <div class="dd-item" data-v="height">高</div>
+              </div>
+            </div>
             <div class="range-input" style="flex:1">
               <div class="input-wrap"><input type="text" placeholder="请输入范围" /><button class="input-clear" aria-label="清除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
               <span class="range-arrow">→</span>
@@ -837,12 +871,51 @@ function clearCategory(){
   document.querySelector('#categorySelect .ss-placeholder').textContent = '请选择商品品类';
   document.getElementById('categorySelect').classList.remove('has-value');
 }
+function selectDdItem(dd, item){
+  dd.querySelectorAll('.dd-item').forEach(i => i.classList.remove('active'));
+  item.classList.add('active');
+  const label = dd.querySelector('.dd-label');
+  if(label) label.textContent = item.textContent;
+  dd.classList.add('has-value');
+  dd.classList.remove('open');
+  dd.dataset.value = item.getAttribute('data-v') || item.textContent;
+}
+function resetDdDefault(dd){
+  const ph = dd.getAttribute('data-placeholder');
+  const label = dd.querySelector('.dd-label');
+  if(label && ph) label.textContent = ph;          /* 独立下拉：回到灰提示词 */
+  dd.classList.remove('has-value','open');
+  dd.querySelectorAll('.dd-item').forEach(i => i.classList.remove('active'));
+  delete dd.dataset.value;
+  if(!ph){                                        /* 规格维度合并式无提示词：重置回默认第一维（黑色已选） */
+    const first = dd.querySelector('.dd-item');
+    if(first) selectDdItem(dd, first);
+  }
+}
+function closeAllDd(except){
+  document.querySelectorAll('.filter-panel .dd').forEach(d => { if(d !== except) d.classList.remove('open'); });
+}
+/* .dd 通用交互：整框开合、互斥、选择写标签变黑、点外部收起（与 search-select 并存） */
+document.querySelectorAll('.filter-panel .dd').forEach(dd => {
+  dd.addEventListener('click', function(e){
+    if(e.target.closest('.dd-item')) return;
+    const wasOpen = dd.classList.contains('open');
+    closeAllDd();
+    if(!wasOpen) dd.classList.add('open');
+  });
+  dd.querySelectorAll('.dd-item').forEach(item => {
+    item.addEventListener('click', function(e){
+      e.stopPropagation();
+      selectDdItem(dd, item);
+    });
+  });
+});
+document.addEventListener('click', function(e){
+  if(!e.target.closest('.filter-panel .dd')) closeAllDd();
+}, true);
 function resetFilters(){
   document.querySelectorAll('.filter-panel input[type="text"]').forEach(input => { input.value = ''; });
-  const whSelect = document.getElementById('warehouseSelect');
-  if(whSelect) whSelect.selectedIndex = 0;
-  const wtSelect = document.getElementById('weightSelect');
-  if(wtSelect) wtSelect.selectedIndex = 0;
+  document.querySelectorAll('.filter-panel .dd').forEach(resetDdDefault);
   clearCategory();
 }
 function expandFirstNode(){
