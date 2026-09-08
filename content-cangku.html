@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="Cache-Control" content="no-store, must-revalidate" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>客户中台 · 仓库商品（原型标注版）</title>
+
+<!-- ===================== SCAFFOLD:CSS → proto-base.css（内联，单文件交付） ===================== -->
+<style>
+/* ==========================================================================
+   proto-base.css — 原型公共基线（来自 prototype-html-pin skill）
+   ========================================================================== */
+:root {
+  --brand: #1E63B2;
+  --brand-hover: #164B8A;
+  --brand-bg: rgba(30,99,178,0.06);
+  --brand-border: rgba(30,99,178,0.15);
+  --slate-50: #F8FAFC;
+  --slate-100: #F1F5F9;
+  --slate-200: #E2E8F0;
+  --slate-300: #CBD5E1;
+  --slate-400: #94A3B8;
+  --slate-500: #64748B;
+  --slate-600: #475569;
+  --slate-700: #334155;
+  --slate-800: #1E293B;
+  --success: #52C41A;
+  --warning: #FAAD14;
+  --error: #F5222D;
+  --info: #1890FF;
+  --amber-bg: rgba(246, 255, 237, 0.5);
+  --amber-border: rgba(183, 235, 143, 0.55);
+  --amber-accent: #389E0D;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: #F5F5F5;
+  overflow: hidden;
+}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #F5F7FA; }
+::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+.app-container { display: flex; flex-direction: column; height: 100vh; position: relative; max-width: 1400px; margin: 0 auto; }
+.proto-top-strip { display: flex; width: 100%; height: 48px; flex-shrink: 0; background: #F5F5F5; }
+.strip-content { width: 100%; }
+.app-body { display: flex; flex: 1; overflow: hidden; }
+.main-content { width: 100%; height: 100%; display: flex; overflow: hidden; }
+/* PRD 悬浮窗：默认收起为右下角悬浮按钮，点击展开 */
+.doc-fab {
+  position: fixed; right: 24px; top: 50%; transform: translateY(-50%); z-index: 220;
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--brand); color: #fff; border: none; cursor: pointer;
+  padding: 12px 18px; border-radius: 28px; font-size: 13px; font-weight: 600;
+  box-shadow: 0 6px 18px rgba(22,119,255,0.35);
+}
+.doc-fab.hidden { display: none; }
+.doc-panel {
+  position: fixed; right: 24px; top: 80px; z-index: 210;   /* top 由 JS 动态定位：展开时对齐搜索框顶部 */
+  width: 360px; max-height: calc(100vh - 104px); overflow-y: auto;
+  background: var(--amber-bg); border: 1px solid var(--amber-border);
+  border-radius: 12px; padding: 16px 18px 12px; box-sizing: border-box;
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(14px) saturate(140%);
+  transform: translateY(16px) scale(0.96); opacity: 0; pointer-events: none;
+  transform-origin: right top; transition: all 0.22s ease;
+  box-shadow: 0 12px 40px rgba(56, 158, 13, 0.12);
+}
+.doc-panel.open { transform: translateY(0) scale(1); opacity: 1; pointer-events: auto; }
+.doc-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 2px solid var(--amber-border); }
+.doc-close { flex-shrink: 0; width: 28px; height: 28px; border: none; background: transparent; color: var(--amber-accent); font-size: 22px; line-height: 1; cursor: pointer; border-radius: 6px; transition: all .15s; }
+.doc-close:hover { background: rgba(217, 247, 224, 0.7); }
+.topbar { height: 48px; background: #fff; border-bottom: 1px solid var(--slate-200); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; flex-shrink: 0; }
+.topbar-left { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--slate-500); }
+.topbar-right { display: flex; align-items: center; gap: 16px; }
+.topbar-right .org-name { font-size: 13px; color: var(--slate-600); cursor: pointer; }
+.topbar-right .notify-bell { position: relative; cursor: pointer; color: var(--slate-500); font-size: 17px; }
+.notify-bell .badge { position: absolute; top: -5px; right: -8px; background: var(--error); color: #fff; font-size: 10px; min-width: 16px; height: 16px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 600; }
+.topbar-right .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--brand); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; cursor: pointer; }
+.content-area { flex: 1; overflow-y: auto; padding: 8px 24px 24px 24px; background: #F5F5F5; }
+.page-title { font-size: 20px; font-weight: 700; color: var(--slate-800); margin-bottom: 4px; }
+.page-subtitle { font-size: 13px; color: var(--slate-500); margin-bottom: 24px; }
+.card { background: #fff; border-radius: 8px; border: 1px solid var(--slate-200); }
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.section-title { font-size: 16px; font-weight: 600; color: var(--slate-800); }
+.section-link { font-size: 13px; color: var(--brand); cursor: pointer; }
+.section-link:hover { text-decoration: underline; }
+.badge-count { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--brand); color: #fff; font-size: 11px; font-weight: 600; margin-left: 8px; }
+.tabs { display: flex; gap: 0; border-bottom: 1px solid var(--slate-200); margin-bottom: 0; }
+.tab-item { padding: 8px 16px; font-size: 13px; color: var(--slate-500); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; background: none; border-top: none; border-left: none; border-right: none; }
+.tab-item:hover { color: var(--brand); }
+.tab-item.active { color: var(--brand); border-bottom-color: var(--brand); font-weight: 600; }
+.tag { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+.tag-orange { background: rgba(250,173,20,0.12); color: #D48806; }
+.tag-blue { background: rgba(30,99,178,0.1); color: var(--brand); }
+.tag-purple { background: rgba(114,46,209,0.1); color: #722ED1; }
+.tag-green { background: rgba(82,196,26,0.12); color: #389E0D; }
+.tag-red { background: rgba(245,34,45,0.1); color: #CF1322; }
+.tag-gray { background: #F5F5F5; color: var(--slate-500); }
+/* 旧 .data-table 样式已移除——统一走 LC-OMS thead th 规范（#fafbfc/500/13px/text-secondary/border:none） */
+.empty-state { text-align: center; padding: 40px 20px; color: var(--slate-400); font-size: 13px; }
+.empty-state i { font-size: 32px; margin-bottom: 8px; display: block; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.proto-element { position: relative; transition: all 0.2s ease; border-radius: 8px; }
+.proto-element:hover, .proto-element.active-highlight {
+  box-shadow: 0 0 0 2px var(--brand), 0 4px 12px rgba(30,99,178,0.15);
+  background-color: rgba(30,99,178,0.03);
+}
+.proto-desc { transition: all 0.2s ease; border-radius: 8px; border: 1px solid var(--amber-border); background: #fff; }
+.proto-desc:hover, .proto-desc.active-highlight {
+  background: rgba(217, 247, 224, 0.7); border-color: var(--amber-accent);
+  box-shadow: 0 2px 8px rgba(217,119,6,0.15);
+}
+.pin-overlay { position: absolute; z-index: 100; pointer-events: auto; width: 22px; height: 22px; border-radius: 50%; background: #F53F3F; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.25); transition: transform 0.15s, box-shadow 0.15s; transform: translate(6px, -50%); }
+.pin-overlay:hover, .pin-overlay.active { transform: translate(6px, -50%) scale(1.3); box-shadow: 0 3px 12px rgba(245,63,63,0.4); }
+.pin-overlay::before { content: ''; position: absolute; right: 100%; top: 50%; width: 8px; height: 2px; background: inherit; }
+.pin-overlay.hidden { display: none; }
+.proto-element.pin-highlighted { box-shadow: 0 0 0 2px #F53F3F !important; border-radius: 8px; }
+.proto-desc.pin-doc-highlight { border-color: #F53F3F !important; background: #FFF1F0 !important; box-shadow: 0 2px 8px rgba(245,63,63,0.12); }
+.doc-panel h2 { font-size: 17px; font-weight: 700; color: var(--slate-800); margin: 0; }
+.doc-section { margin-bottom: 20px; padding: 12px 14px; background: #fff; border-radius: 8px; border: 1px solid var(--amber-border); font-size: 13px; line-height: 1.7; color: var(--slate-600); position: relative; transition: all 0.2s; }
+.doc-section .doc-num { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: var(--brand); color: #fff; font-size: 11px; font-weight: 700; margin-right: 8px; flex-shrink: 0; }
+.doc-section .doc-label { font-weight: 600; color: var(--slate-700); font-size: 13px; margin-bottom: 4px; display: flex; align-items: center; }
+.doc-section .doc-desc { font-size: 12px; color: var(--slate-500); }
+.sidebar { width: 220px; min-width: 220px; background: #fff; border-right: 1px solid var(--slate-200); display: flex; flex-direction: column; position: relative; transition: width 0.3s, min-width 0.3s; flex-shrink: 0; }
+.sidebar.collapsed { width: 56px; min-width: 56px; }
+.sidebar.collapsed .nav-text, .sidebar.collapsed .nav-group-title, .sidebar.collapsed .org-info-text, .sidebar.collapsed .logo-text { display: none; }
+.sidebar-logo { height: 56px; display: flex; align-items: center; padding: 0 16px; border-bottom: 1px solid var(--slate-200); cursor: pointer; gap: 10px; flex-shrink: 0; }
+.sidebar-logo .logo-icon { width: 32px; height: 32px; background: var(--brand); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 16px; flex-shrink: 0; }
+.sidebar-logo .logo-text { font-size: 14px; font-weight: 700; color: var(--slate-800); white-space: nowrap; }
+.sidebar-nav { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 8px 0; }
+.sidebar-nav::-webkit-scrollbar { width: 4px; }
+.sidebar-nav::-webkit-scrollbar-thumb { background: var(--slate-300); border-radius: 2px; }
+.nav-group { margin-bottom: 2px; }
+.nav-group-title { padding: 12px 16px 4px; font-size: 11px; font-weight: 600; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+.nav-item { padding: 9px 16px; display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--slate-600); cursor: pointer; transition: all 0.15s; border-right: 3px solid transparent; white-space: nowrap; }
+.nav-item:hover { background: rgba(30,99,178,0.06); color: var(--brand); }
+.nav-item.active { background: rgba(30,99,178,0.1); color: var(--brand); border-right-color: var(--brand); font-weight: 600; }
+.nav-item i { width: 18px; text-align: center; font-size: 14px; flex-shrink: 0; }
+.sidebar-footer { padding: 12px 16px; border-top: 1px solid var(--slate-200); font-size: 12px; color: var(--slate-500); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
+.sidebar-footer i { margin-right: 6px; color: var(--slate-400); }
+.collapse-toggle { position: absolute; bottom: 56px; right: -12px; width: 24px; height: 24px; background: #fff; border: 1px solid var(--slate-200); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 10px; color: var(--slate-500); z-index: 20; transition: all 0.15s; }
+.collapse-toggle:hover { background: rgba(30,99,178,0.06); color: var(--brand); border-color: var(--brand); }
+.collapse-toggle i { transition: transform 0.3s; }
+@media (max-width: 768px) {
+  .app-body { flex-direction: column; }
+  .main-content { width: 100%; height: 60vh; }
+  .doc-panel { right: 16px; left: 16px; width: auto; bottom: 80px; max-height: 70vh; }
+  .pin-overlay { display: none; }
+  .sidebar { display: none; }
+}
+</style>
+
+<!-- ===================== 客户中台设计令牌 + 仓库商品页组件样式（与线上 content-cangku.html 一致） ===================== -->
+<style>
+  :root{
+    --primary:#1677ff;
+    --primary-hover:#4096ff;
+    --primary-active:#0958d9;
+    --primary-bg:rgba(22,119,255,0.06);
+    --primary-border:rgba(22,119,255,0.24);
+    --success:#52c41a;
+    --success-bg:rgba(82,196,26,0.06);
+    --warning:#faad14;
+    --warning-bg:rgba(250,173,20,0.08);
+    --danger:#ff4d4f;
+    --danger-bg:rgba(255,77,79,0.06);
+    --info:#1677ff;
+    --info-bg:rgba(22,119,255,0.04);
+    --bg:#f5f7fa;
+    --surface:#ffffff;
+    --border:#e5e6eb;
+    --border-light:#f0f0f0;
+    --text:#1d2129;
+    --text-secondary:#4e5969;
+    --text-tertiary:#86909c;
+    --text-quaternary:#c9cdd4;
+    --radius-sm:4px;
+    --radius-md:6px;
+    --radius-lg:8px;
+    --shadow-card:0 1px 2px rgba(0,0,0,.03),0 1px 6px -1px rgba(0,0,0,.02),0 2px 4px rgba(0,0,0,.02);
+    --shadow-dropdown:0 6px 16px rgba(0,0,0,.08),0 3px 6px -3px rgba(0,0,0,.12),0 -5px 12px rgba(0,0,0,.05);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Helvetica Neue',Helvetica,Arial,sans-serif;
+    font-size:14px;line-height:1.5715;color:var(--text);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);min-height:100vh}
+  a{color:inherit;text-decoration:none}
+  button{font-family:inherit;cursor:pointer;border:1px solid transparent;background:none;color:inherit;font-size:14px}
+  input,select{font-family:inherit;font-size:14px;color:var(--text)}
+  ::selection{background:var(--primary-bg)}
+
+  .filter-panel{background:#fff;border-radius:var(--radius-lg);border:1px solid var(--border-light);padding:16px 20px;margin-bottom:16px;box-shadow:var(--shadow-card)}
+  .filter-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .f-input{height:32px;border:1px solid var(--border);border-radius:var(--radius-md);padding:0 46px 0 11px;min-width:80px;font-size:13.5px;transition:border-color .2s,box-shadow .2s;outline:none;background:#fff;color:var(--text);position:relative}
+  .f-input:focus{border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-bg)}
+  .f-input::placeholder{color:var(--text-quaternary)}
+  .input-wrap{position:relative;flex-shrink:0}
+  .input-wrap .f-input{padding-right:46px;width:100%}
+  .input-clear{position:absolute;right:28px;top:50%;transform:translateY(-50%);width:18px;height:18px;border-radius:50%;border:none;background:var(--bg);display:grid;place-items:center;cursor:pointer;opacity:0;transition:opacity .15s;color:var(--text-tertiary);padding:0;line-height:1;z-index:1;}
+  .input-wrap:hover .input-clear{opacity:1}
+  .input-clear:hover{background:#e8eaed;color:var(--text-secondary)}
+  .input-clear svg{width:10px;height:10px}
+  .input-search{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:18px;height:18px;border:none;background:transparent;cursor:pointer;display:grid;place-items:center;color:var(--text-tertiary);padding:0;line-height:1;transition:color .15s;}
+  .input-search:hover{color:var(--primary)}
+  .input-search svg{width:14px;height:14px}
+  .f-select{height:32px;border:1px solid var(--border);border-radius:var(--radius-md);padding:0 8px;min-width:80px;font-size:13.5px;outline:none;background:#fff;color:var(--text);cursor:pointer}
+  #weightSelect{border-radius:var(--radius-md) 0 0 var(--radius-md)}
+  .f-select option{color:var(--text)}
+  .f-select option[value=""]{color:var(--text-quaternary)}
+  .f-select:not(:has(option:checked:not([value=""]))){color:var(--text-quaternary)}
+  .range-input{display:inline-flex;align-items:center;gap:4px;flex-shrink:0;height:32px;border:1px solid var(--border);border-radius:0 var(--radius-md) var(--radius-md) 0;background:#fff;padding:0 6px 0 10px;transition:border-color .2s;min-width:160px;margin-left:-7px;}
+  .range-input:focus-within{border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-bg)}
+  .range-input input{border:none;outline:none;background:transparent;font-size:13.5px;color:var(--text-secondary)!important;min-width:50px;width:70px;padding:0;}
+  .range-input input::placeholder{color:var(--text-quaternary)}
+  .range-input .input-wrap{position:relative;flex:1;min-width:60px}
+  .range-input .input-wrap input{width:100%}
+  .range-input .input-clear{position:absolute;right:2px;top:50%;transform:translateY(-50%);width:16px;height:16px;border-radius:50%;border:none;background:var(--bg);display:grid;place-items:center;cursor:pointer;opacity:0;transition:opacity .15s;color:var(--text-tertiary);padding:0;line-height:1;z-index:1;}
+  .range-input .input-wrap:hover .input-clear{opacity:1}
+  .range-input .input-clear:hover{background:#e8eaed;color:var(--text-secondary)}
+  .range-input .input-clear svg{width:10px;height:10px}
+  .range-arrow{color:var(--text-tertiary);font-size:13px;flex-shrink:0;user-select:none}
+  .range-btn{margin-left:auto;flex-shrink:0;width:26px;height:26px;border:none;background:transparent;display:grid;place-items:center;cursor:pointer;border-radius:var(--radius-sm);transition:background .15s,color .15s;color:var(--text-secondary);}
+  .range-btn:hover{background:var(--primary-bg);color:var(--primary)}
+  .range-btn svg{width:14px;height:14px}
+  .f-select::placeholder{color:var(--text-quaternary)}
+  .f-date{height:32px;border:1px solid var(--border);border-radius:var(--radius-md);padding:0 8px;min-width:130px;font-size:13.5px;outline:none;background:#fff;color:var(--text);cursor:pointer}
+  .btn-primary{height:32px;padding:0 12px;background:var(--primary);color:#fff;border-radius:var(--radius-md);border:1px solid var(--primary);font-weight:400;display:inline-flex;align-items:center;gap:6px;transition:background .2s,border-color .2s}
+  .btn-primary:hover{background:var(--primary-hover);border-color:var(--primary-hover)}
+  .btn-default{height:32px;padding:0 12px;background:#fff;color:var(--text-secondary);border-radius:var(--radius-md);border:1px solid var(--border);transition:border-color .2s,color .2s}
+  .btn-default:hover{border-color:var(--primary);color:var(--primary)}
+  .btn-primary svg,.btn-default svg{width:14px;height:14px}
+
+  .search-select{position:relative;flex-shrink:0}
+  .search-select-trigger{height:32px;border:1px solid var(--border);border-radius:var(--radius-md);padding:0 24px 0 8px;min-width:130px;font-size:13.5px;background:#fff;display:flex;align-items:center;justify-content:space-between;cursor:pointer;color:var(--text-secondary);transition:border-color .2s;position:relative;}
+  .search-select-trigger:hover{border-color:var(--primary)}
+  .ss-placeholder{color:var(--text-quaternary)}
+  .search-select.has-value .ss-placeholder{color:var(--text)}
+  .ss-trigger-arrow{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:12px;height:12px;color:var(--text-quaternary);pointer-events:none;transition:opacity .15s;}
+  .ss-clear{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:16px;height:16px;border-radius:50%;border:none;background:transparent;display:grid;place-items:center;cursor:pointer;opacity:0;transition:opacity .15s;color:var(--text-tertiary);padding:0;line-height:1;z-index:1;}
+  .search-select.has-value .search-select-trigger:hover .ss-clear{opacity:1}
+  .ss-clear:hover{background:var(--bg);color:var(--text-secondary)}
+  .ss-clear svg{width:10px;height:10px}
+  .search-select.open .search-select-trigger{border-color:var(--primary)}
+  .search-select-panel{position:absolute;top:calc(100% + 4px);left:0;min-width:260px;background:#fff;border:1px solid var(--border-light);border-radius:var(--radius-lg);box-shadow:var(--shadow-dropdown);z-index:300;display:none;padding:10px 0;}
+  .search-select.open .search-select-panel{display:block}
+  .ss-search{margin:0 10px 8px;height:30px;border:1px solid var(--border);border-radius:var(--radius-md);padding:0 8px 0 28px;font-size:13px;outline:none;background:var(--bg);color:var(--text);width:calc(100% - 20px);box-sizing:border-box;}
+  .ss-search:focus{border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-bg)}
+  .ss-search-wrap{position:relative}
+  .ss-search-icon{position:absolute;left:10px;top:15px;transform:translateY(-50%);width:14px;height:14px;color:var(--text-quaternary);pointer-events:none;display:block;}
+  .ss-list{max-height:240px;overflow-y:auto;padding:2px 4px}
+  .ss-item{display:flex;align-items:center;gap:6px;padding:5px 8px;font-size:13.5px;border-radius:var(--radius-sm);transition:background .15s;white-space:nowrap;}
+  .ss-item.l1{color:var(--text-tertiary);cursor:not-allowed;padding-left:8px}
+  .ss-item.l1:hover{background:transparent}
+  .ss-item.l2{color:var(--text-tertiary);cursor:not-allowed;padding-left:24px}
+  .ss-item.l2:hover{background:transparent}
+  .ss-item.l3{color:var(--text);cursor:pointer;padding-left:40px}
+  .ss-item.l3:hover{background:var(--bg)}
+  .ss-item.l3.selected{background:var(--primary-bg);color:var(--primary)}
+  .ss-arrow{width:16px;height:16px;flex-shrink:0;display:grid;place-items:center;cursor:pointer;border-radius:2px;transition:transform .15s,color .15s;color:var(--text-tertiary);}
+  .ss-arrow:hover{color:var(--text-secondary);background:var(--bg)}
+  .ss-arrow svg{width:12px;height:12px}
+  .ss-arrow.expanded{transform:rotate(90deg)}
+  .ss-arrow.invisible{visibility:hidden;pointer-events:none}
+  .ss-arrow.disabled{color:var(--text-tertiary);cursor:default;pointer-events:none}
+  .ss-label{flex:1;overflow:hidden;text-overflow:ellipsis}
+  .ss-label.disabled{color:var(--text-tertiary)}
+  .ss-children{display:none}
+  .ss-children.open{display:block}
+  .ss-foot{display:flex;justify-content:flex-end;gap:8px;padding:8px 12px 4px;border-top:1px solid var(--border-light);margin-top:4px;}
+  .ss-btn{height:28px;padding:0 14px;font-size:13px;border-radius:var(--radius-md);transition:all .2s}
+  .ss-btn-cancel{background:#fff;color:var(--text-secondary);border:1px solid var(--border)}
+  .ss-btn-cancel:hover{border-color:var(--primary);color:var(--primary)}
+  .ss-btn-ok{background:var(--primary);color:#fff;border:1px solid var(--primary)}
+  .ss-btn-ok:hover{background:var(--primary-hover)}
+
+  .table-panel{background:transparent;border-radius:var(--radius-lg);border:none;border-top:1px solid var(--border-light);border-bottom:1px solid var(--border-light);box-shadow:none;overflow:visible}
+  .table-toolbar{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--border-light)}
+  .toolbar-left{display:flex;align-items:center;gap:12px}
+  .toolbar-btn{height:30px;padding:0 12px;background:var(--primary);color:#fff;border-radius:var(--radius-md);font-size:13px;display:inline-flex;align-items:center;gap:5px}
+  .toolbar-btn:hover{background:var(--primary-hover)}
+  .table-wrap{overflow-x:auto;background:transparent}
+  table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed;background:transparent}
+  thead th{background:#fafbfc;padding:12px 16px;text-align:left;font-size:13px;font-weight:500;color:var(--text-secondary);white-space:nowrap;border:none}
+  tbody tr.row-main td{background:#fff;border-top:1px solid var(--border-light);border-bottom:1px solid var(--border-light);padding:14px 16px;font-size:13.5px;color:var(--text);vertical-align:middle;}
+  tbody tr.row-main td:first-child{border-left:1px solid var(--border-light);border-top-left-radius:var(--radius-md)}
+  tbody tr.row-main td:last-child{border-right:1px solid var(--border-light);border-top-right-radius:var(--radius-md)}
+  tbody tr.gap td{height:18px;padding:0;border:none;background:transparent;font-size:0;line-height:0}
+  tbody tr.hover td{background:#fafcff}
+  .cell-sku{color:var(--primary);cursor:pointer}
+  .cell-sku:hover{text-decoration:underline}
+  .field{display:flex;align-items:baseline;line-height:1.9;font-size:12.5px;color:var(--text-tertiary)}
+  .field .f-label{flex:0 0 5em;text-align:right;white-space:nowrap;color:var(--text-tertiary)}
+  .field .f-val{flex:1;min-width:0;color:var(--text-tertiary);word-break:break-all}
+  /* 标签宽度 = 各列最长字段名（含冒号）：右对齐使冒号垂直对齐，最长标签左缘严格贴齐列标题左缘 */
+  tbody tr.row-main td:nth-child(3) .f-label{flex-basis:7em}  /* 商品名称列：中文/英文商品名称：=7字 */
+  tbody tr.row-main td:nth-child(4) .f-label{flex-basis:6em}  /* 商品编码列：自定义编码：=6字 */
+  tbody tr.row-main td:nth-child(5) .f-label{flex-basis:3em}  /* 商品属性列：品类：/货值：=3字 */
+  tbody tr.row-main td:nth-child(6) .f-label{flex-basis:5em}  /* 规格信息列：预报尺寸：等=5字 */
+  tbody tr.row-main td:nth-child(2){min-width:0}
+  .action-btns{display:flex;gap:8px;justify-content:flex-end}
+  .abtn{padding:3px 12px;border-radius:var(--radius-sm);font-size:12px;font-weight:400;transition:all .2s}
+  .abtn-blue{color:var(--primary);background:transparent;border:1px solid var(--primary-border)}
+  .abtn-blue:hover{color:#fff;background:var(--primary);border-color:var(--primary)}
+  .abtn-link{color:var(--primary);background:none;border:none;padding:3px 8px}
+  .abtn-link:hover{text-decoration:underline}
+
+  .pagination{display:flex;align-items:center;justify-content:flex-end;padding:12px 20px;border-top:1px solid var(--border-light);font-size:13px;color:var(--text-secondary);position:sticky;bottom:0;z-index:10;background:var(--bg);}
+  .pag-left{display:flex;align-items:center;gap:12px}
+  .pag-select{height:28px;border:1px solid var(--border);border-radius:var(--radius-sm);padding:0 6px;font-size:13px;outline:none;cursor:pointer;margin:0 4px}
+  .pag-nums{display:flex;align-items:center;gap:4px}
+  .pg{min-width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;border-radius:var(--radius-sm);font-size:13px;cursor:pointer;transition:all .2s;border:1px solid transparent;color:var(--text)}
+  .pg:hover{color:var(--primary);border-color:var(--primary-border)}
+  .pg.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .pg.disabled{color:var(--text-quaternary);cursor:not-allowed}
+  .pg-arrow{font-size:12px}
+  .pag-right{display:flex;align-items:center;gap:8px}
+  .pag-jump{width:48px;height:28px;border:1px solid var(--border);border-radius:var(--radius-sm);text-align:center;font-size:13px;outline:none}
+  .pag-jump:focus{border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-bg)}
+
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);opacity:0;visibility:hidden;transition:opacity .25s,visibility .25s;z-index:200}
+  .overlay.open{opacity:1;visibility:visible}
+  .drawer{position:fixed;top:0;right:0;height:100vh;width:480px;max-width:92vw;background:#fff;box-shadow:var(--shadow-dropdown);transform:translateX(100%);transition:transform .3s cubic-bezier(.23,1,.32,1);z-index:300;display:flex;flex-direction:column}
+  .drawer.open{transform:translateX(0)}
+  .drawer-head{padding:16px 24px;border-bottom:1px solid var(--border-light);display:flex;align-items:flex-start;gap:12px}
+  .drawer-head h3{font-size:16px;font-weight:600}
+  .drawer-head p{font-size:13px;color:var(--text-tertiary);margin-top:2px}
+  .drawer-close{margin-left:auto;width:32px;height:32px;border-radius:var(--radius-md);display:grid;place-items:center;color:var(--text-tertiary);transition:color .2s,background .2s;flex-shrink:0}
+  .drawer-close:hover{background:var(--bg);color:var(--text)}
+  .drawer-close svg{width:16px;height:16px}
+  .drawer-body{padding:20px 24px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:20px}
+  .drawer-foot{padding:12px 24px;border-top:1px solid var(--border-light);display:flex;gap:10px}
+  .dfield{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px dashed var(--border);font-size:13.5px}
+  .dfield-label{color:var(--text-tertiary);flex-shrink:0}
+  .dfield-value{color:var(--text);font-weight:500;text-align:right;word-break:break-all}
+  .dsec-title{font-size:12px;font-weight:600;color:var(--text-tertiary);letter-spacing:.5px;margin-bottom:10px;text-transform:uppercase}
+
+  /* 原型标注版专属：标注显隐开关 */
+  .proto-badge{margin-bottom:14px;padding:10px 12px;background:var(--amber-border);border-radius:6px;display:flex;align-items:center;gap:8px;}
+  .proto-badge .pb-tag{background:var(--amber-accent);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px;}
+  .proto-badge .pb-text{font-size:12px;font-weight:600;color:var(--amber-accent);}
+  .pin-toggle{margin-left:auto;height:26px;padding:0 10px;font-size:12px;border:1px solid var(--amber-border);background:#fff;color:var(--amber-accent);border-radius:6px;cursor:pointer;transition:all .15s;}
+  .pin-toggle:hover{background:#fef3c7}
+  .doc-note{margin-top:16px;border-left:3px solid var(--brand);padding:10px 12px;background:rgba(22,119,255,.04);border-radius:4px;font-size:12px;color:var(--slate-600);line-height:1.8;}
+  .doc-note b{color:var(--brand)}
+</style>
+
+<!-- ===================== 主色覆盖：本页属客户中台项目，统一使用 #1677ff ===================== -->
+<style>
+  :root{
+    --brand:#1677ff;
+    --brand-hover:#4096ff;
+    --brand-bg:rgba(22,119,255,.06);
+    --brand-border:rgba(22,119,255,.24);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== 主体：纯内容（导航由 shell Header 提供）+ 右侧 22% 功能说明 ===================== -->
+<div class="app-container" id="appContainer">
+
+  <!-- 顶部色带：与内容区同宽同色，使 Header 视觉上贴合内容 -->
+  <div class="proto-top-strip">
+    <div class="strip-content"></div>
+  </div>
+
+  <!-- 内容区：中间主内容（78%）+ 右侧说明面板（22%） -->
+  <div class="app-body">
+    <div class="main-content" id="leftPanel">
+    <div class="content-area">
+        <!-- ① 筛选栏（Pin 1） -->
+        <div class="proto-element filter-panel" data-proto-id="1">
+          <div class="filter-row">
+            <div class="input-wrap" style="flex:1.5"><input class="f-input" type="text" placeholder="请输入SKU/自定义编码/平台编码" /><button class="input-clear" aria-label="清除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button><button class="input-search" aria-label="搜索" onclick="doSearch(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></button></div>
+            <div class="input-wrap" style="flex:1.3"><input class="f-input" type="text" placeholder="请输入商品名称" /><button class="input-clear" aria-label="清除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button><button class="input-search" aria-label="搜索" onclick="doSearch(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></button></div>
+            <select class="f-select" id="warehouseSelect"><option value="">请选择仓库</option><option>USLAX09</option><option>USNJ07</option><option>USGA12</option><option>USTX03</option></select>
+            <div class="search-select" id="categorySelect">
+              <div class="search-select-trigger">
+                <span class="ss-placeholder">请选择商品品类</span>
+                <svg class="ss-trigger-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+                <button class="ss-clear" aria-label="清除选择" onclick="event.stopPropagation();clearCategory()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+              </div>
+              <div class="search-select-panel">
+                <div class="ss-search-wrap">
+                  <svg class="ss-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                  <input class="ss-search" type="text" placeholder="请输入品类名称" />
+                </div>
+                <div class="ss-list" id="categoryList"></div>
+                <div class="ss-foot">
+                  <button class="ss-btn ss-btn-cancel" onclick="closeSearchSelect('categorySelect')">取消</button>
+                  <button class="ss-btn ss-btn-ok" onclick="confirmCategory()">确定</button>
+                </div>
+              </div>
+            </div>
+            <select class="f-select" id="weightSelect"><option value="">重量</option><option value="weight">重量</option><option value="value">货值</option><option value="length">长</option><option value="width">宽</option><option value="height">高</option></select>
+            <div class="range-input" style="flex:1">
+              <div class="input-wrap"><input type="text" placeholder="请输入范围" /><button class="input-clear" aria-label="清除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+              <span class="range-arrow">→</span>
+              <div class="input-wrap"><input type="text" placeholder="请输入范围" /><button class="input-clear" aria-label="清除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+              <button class="range-btn" aria-label="范围搜索">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              </button>
+            </div>
+            <button class="btn-default" onclick="resetFilters()">重置</button>
+          </div>
+        </div>
+
+        <!-- ② 表格卡片式行（Pin 2） -->
+        <div class="proto-element table-panel" data-proto-id="2">
+          <div class="table-toolbar">
+            <div class="toolbar-left">
+              <!-- ⑤ 更新尺重（Pin 5） -->
+              <button class="toolbar-btn proto-element" data-proto-id="5" onclick="alert('更新尺重')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="9"/></svg>
+                更新尺重
+              </button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:36px"><input type="checkbox" id="checkAll" /></th>
+                  <th style="width:17%">仓库</th>
+                  <!-- ③ 字段冒号对齐（Pin 3 标注首行 中文商品名称 字段） -->
+                  <th style="width:26%">商品名称</th>
+                  <th style="width:20%">商品编码</th>
+                  <th style="width:18%">商品属性</th>
+                  <!-- ④ 公制单位（Pin 4） -->
+                  <th style="width:19%" data-proto-id="4">规格信息</th>
+                </tr>
+              </thead>
+              <tbody id="tableBody"></tbody>
+            </table>
+          </div>
+          <div class="pagination" id="pagination"></div>
+        </div>
+
+      </div>
+    </div>
+
+  <!-- 右侧功能说明面板（琥珀色，Pin 标注对应） -->
+  <div class="doc-panel" id="rightPanel">
+    <div class="proto-badge">
+      <span class="pb-tag">PROTOTYPE</span>
+      <span class="pb-text">仓库商品 · 设计说明</span>
+      <button class="pin-toggle" id="pinToggleBtn" onclick="togglePins()">隐藏标注</button>
+    </div>
+    <div class="doc-head">
+      <h2>功能说明文档</h2>
+      <button class="doc-close" aria-label="收起" onclick="toggleDocPanel(false)">×</button>
+    </div>
+
+    <div class="proto-desc doc-section" data-proto-desc="1">
+      <div class="doc-label"><span class="doc-num">1</span> 筛选栏</div>
+      <div class="doc-desc">重置按钮固定在筛选行最右（全局约定）；所有占位提示词统一色值 <b>rgb(201,205,212)</b>、字号 13.5px，未选中态为灰、输入/选中态转黑。"重量"下拉右侧直角、与右侧范围输入组左侧直角无缝合并为同一边框（合并式）；"请选择商品品类"为三级树形单选，未选中显示灰色占位。</div>
+    </div>
+
+    <div class="proto-desc doc-section" data-proto-desc="2">
+      <div class="doc-label"><span class="doc-num">2</span> 表格卡片式行</div>
+      <div class="doc-desc">每行数据 = 独立白卡，行间留透明缝隙透出页面灰底 #f5f7fa，比无缝表格更轻；hover 时卡片阴影加深。表头浅灰底、无竖向边框，视觉层级更干净。</div>
+    </div>
+
+    <div class="proto-desc doc-section" data-proto-desc="3">
+      <div class="doc-label"><span class="doc-num">3</span> 字段冒号对齐</div>
+      <div class="doc-desc">字段标签右对齐 + 固定宽度 = 该列最长字段名（含冒号）；最长标签左缘与列标题左缘对齐，短标签靠右收齐，保证冒号上下垂直对齐。各列通过 nth-child 单独覆盖标签宽度（如 中文商品名称：7em、自定义编码：6em、品类：3em、预报尺寸：5em）。</div>
+    </div>
+
+    <div class="proto-desc doc-section" data-proto-desc="4">
+      <div class="doc-label"><span class="doc-num">4</span> 公制单位</div>
+      <div class="doc-desc">尺寸与重量统一以「公制」单位展示（如 120*40*80 公制 / 0.25 公制）。区分预报值与实际值，便于核对海外仓入库实测与申报差异。</div>
+    </div>
+
+    <div class="proto-desc doc-section" data-proto-desc="5">
+      <div class="doc-label"><span class="doc-num">5</span> 更新尺重</div>
+      <div class="doc-desc">顶部工具栏主操作，用于批量更新商品实测尺寸 / 重量。典型场景：海外仓入库复测后回写预报重量 / 尺寸，保持库存数据准确。</div>
+    </div>
+
+    <div class="proto-desc doc-section" data-proto-desc="6">
+      <div class="doc-label"><span class="doc-num">6</span> 详情抽屉</div>
+      <div class="doc-desc">点击商品名称打开右侧抽屉，查看该 SKU 完整字段（仓库 / 商品 / 编码 / 属性 / 规格）。按 B 端准则，查看为只读最高频操作，置于交互首位。</div>
+    </div>
+
+    <div class="doc-note">
+      <b>原型说明：</b>本页为带标注的交互式原型（prototype-html-pin），左侧为仓库商品页面、右侧为设计要点说明。红点即标注锚点，hover 红点或说明条可联动高亮。当前版本为演示稿，未接入真实接口。
+    </div>
+  </div>
+  <!-- PRD 悬浮按钮：默认可见，点击展开上方功能说明面板 -->
+  <button class="doc-fab" id="docFab" onclick="toggleDocPanel(true)">
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
+    功能说明
+  </button>
+  </div><!-- /.app-body -->
+</div><!-- /.app-container -->
+
+<!-- ===================== 详情抽屉 ===================== -->
+<div class="overlay" id="overlay"></div>
+<aside class="drawer" id="drawer" aria-hidden="true">
+  <div class="drawer-head">
+    <div>
+      <h3 id="drawTitle">详情</h3>
+      <p id="drawSub"></p>
+    </div>
+    <button class="drawer-close" id="drawerClose" aria-label="关闭">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="drawer-body" id="drawerBody"></div>
+  <div class="drawer-foot">
+    <button class="btn-default" style="flex:1;height:36px;border-radius:var(--radius-md)" onclick="closeDrawer()">关闭</button>
+    <button class="btn-primary" style="flex:1;height:36px;border-radius:var(--radius-md)" onclick="closeDrawer()">确认</button>
+  </div>
+</aside>
+
+<!-- ===================== SCAFFOLD:JS → proto-connect.js（内联） ===================== -->
+<script>
+/* proto-connect.js — Pin 红点标注系统（来自 prototype-html-pin skill） */
+var pinEls = {};
+var pinTargets = {};
+var pinDocs = {};
+var pinsVisible = true;
+
+function collectPins() {
+  document.querySelectorAll('[data-proto-id]').forEach(function(el) {
+    var id = el.getAttribute('data-proto-id');
+    pinTargets[id] = el;
+  });
+  document.querySelectorAll('[data-proto-desc]').forEach(function(el) {
+    var id = el.getAttribute('data-proto-desc');
+    pinDocs[id] = el;
+  });
+}
+function createPins() {
+  Object.keys(pinTargets).forEach(function(id) {
+    if (pinEls[id]) return;
+    var pin = document.createElement('div');
+    pin.className = 'pin-overlay';
+    pin.textContent = id;
+    pin.setAttribute('data-pin', id);
+    document.getElementById('appContainer').appendChild(pin);
+    pinEls[id] = pin;
+    pin.addEventListener('mouseenter', function() { highlightPin(id); });
+    pin.addEventListener('mouseleave', clearPinHighlight);
+    pin.addEventListener('click', function() { openDocTo(id); });
+    var target = pinTargets[id];
+    target.addEventListener('mouseenter', function() { highlightPin(id); });
+    target.addEventListener('mouseleave', clearPinHighlight);
+  });
+  Object.keys(pinDocs).forEach(function(id) {
+    var doc = pinDocs[id];
+    doc.addEventListener('mouseenter', function() { highlightPin(id); });
+    doc.addEventListener('mouseleave', clearPinHighlight);
+  });
+  updatePinPositions();
+}
+function highlightPin(id) {
+  clearPinHighlight();
+  if (pinEls[id]) pinEls[id].classList.add('active');
+  if (pinTargets[id]) pinTargets[id].classList.add('pin-highlighted');
+  if (pinDocs[id]) pinDocs[id].classList.add('pin-doc-highlight');
+}
+function clearPinHighlight() {
+  Object.values(pinEls).forEach(function(p) { p.classList.remove('active'); });
+  Object.values(pinTargets).forEach(function(t) { t.classList.remove('pin-highlighted'); });
+  Object.values(pinDocs).forEach(function(d) { d.classList.remove('pin-doc-highlight'); });
+}
+function updatePinPositions() {
+  var container = document.getElementById('appContainer');
+  if (!container) return;
+  var cr = container.getBoundingClientRect();
+  Object.keys(pinEls).forEach(function(id) {
+    var target = pinTargets[id];
+    if (!target) return;
+    var rect = target.getBoundingClientRect();
+    var pin = pinEls[id];
+    pin.style.left = (rect.right - cr.left + 2) + 'px';
+    pin.style.top = (rect.top - cr.top + rect.height / 2) + 'px';
+  });
+}
+function setPinsVisible(visible) {
+  pinsVisible = visible;
+  Object.values(pinEls).forEach(function(p) {
+    p.classList.toggle('hidden', !visible);
+  });
+}
+function togglePins(){
+  setPinsVisible(!pinsVisible);
+  var btn = document.getElementById('pinToggleBtn');
+  if(btn) btn.textContent = pinsVisible ? '隐藏标注' : '显示标注';
+}
+/* PRD 悬浮窗：默认收起（FAB 可见），点击 FAB 展开，点击 × 收起 */
+/* 展开时把 PRD 面板顶部对齐筛选栏搜索框（动态取搜索框位置，避免被 iframe 居中偏差影响） */
+function positionDocPanel(){
+  var panel = document.getElementById('rightPanel');
+  if(!panel) return;
+  var sb = document.querySelector('.filter-panel .input-wrap input');
+  var top = 80;
+  if(sb){
+    var r = sb.getBoundingClientRect();
+    top = Math.max(Math.round(r.top), 12);
+  }
+  panel.style.top = top + 'px';
+  panel.style.maxHeight = 'calc(100vh - ' + (top + 24) + 'px)';
+}
+function toggleDocPanel(force){
+  var panel = document.getElementById('rightPanel');
+  var fab = document.getElementById('docFab');
+  if(!panel || !fab) return;
+  var open = (typeof force === 'boolean') ? force : !panel.classList.contains('open');
+  if(open) positionDocPanel();
+  panel.classList.toggle('open', open);
+  fab.classList.toggle('hidden', open);
+  if(open) postHeight();
+}
+/* 点击红点：展开 PRD 并滚动定位到对应说明条 */
+function openDocTo(id){
+  toggleDocPanel(true);
+  var doc = pinDocs[id];
+  if(doc){
+    setTimeout(function(){
+      doc.scrollIntoView({ behavior:'smooth', block:'center' });
+      highlightPin(id);
+    }, 60);
+  }
+}
+window.addEventListener('DOMContentLoaded', function() {
+  collectPins();
+  createPins();
+  document.querySelectorAll('[id*="leftPanel"], .content-area, .main-content').forEach(function(c) {
+    c.addEventListener('scroll', updatePinPositions);
+  });
+  /* absolute 定位无需等待布局稳定，立即计算即可 */
+  updatePinPositions();
+});
+window.addEventListener('resize', function(){
+  updatePinPositions();
+  var p = document.getElementById('rightPanel');
+  if(p && p.classList.contains('open')) positionDocPanel();
+});
+
+/* ============ 高度上报（供壳层 iframe 自适应，与原 content 页一致） ============ */
+function postHeight(){
+  const h = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight, window.innerHeight);
+  if(window.parent !== window) window.parent.postMessage({ type:'resize', height:h }, '*');
+}
+window.addEventListener('load', postHeight);
+if(window.ResizeObserver){ new ResizeObserver(postHeight).observe(document.body); }
+</script>
+
+<!-- ===================== 页面逻辑（仓库商品数据 + 渲染 + 交互） ===================== -->
+<script>
+const TABLE_DATA = [
+  { warehouseCode:'USLAX09', cnName:'纯棉白色圆领T恤', enName:'Cotton White Crew Neck T-Shirt', cnDeclare:'棉制针织上衣', enDeclare:'Knitted Cotton Top', productCode:'PROD-001', customCode:'CUSTOM-001', platformCode:'AMZ-US', sku:'SKU001', category:'上衣', value:'123 USD', forecastSize:'120 * 40 * 80 公制', forecastWeight:'0.25 公制', actualSize:'122 * 41 * 82 公制', actualWeight:'0.26 公制' },
+  { warehouseCode:'USLAX09', cnName:'直筒牛仔裤', enName:'Straight Leg Denim Jeans', cnDeclare:'棉制长裤', enDeclare:'Cotton Trousers', productCode:'PROD-002', customCode:'CUSTOM-002', platformCode:'AMZ-US', sku:'SKU002', category:'下装', value:'—', forecastSize:'85 * 35 * 105 公制', forecastWeight:'0.65 公制', actualSize:'86 * 36 * 106 公制', actualWeight:'0.67 公制' },
+  { warehouseCode:'USNJ07', cnName:'无线蓝牙耳机', enName:'Wireless Bluetooth Earbuds', cnDeclare:'蓝牙耳机', enDeclare:'Bluetooth Earphone', productCode:'PROD-003', customCode:'CUSTOM-003', platformCode:'EBAY-EU', sku:'SKU003', category:'数码配件', value:'56 USD', forecastSize:'8 * 6 * 3 公制', forecastWeight:'0.08 公制', actualSize:'8 * 6 * 3 公制', actualWeight:'0.085 公制' },
+  { warehouseCode:'USNJ07', cnName:'不锈钢保温杯', enName:'Stainless Steel Thermos', cnDeclare:'不锈钢保温容器', enDeclare:'Stainless Steel Bottle', productCode:'PROD-004', customCode:'CUSTOM-004', platformCode:'WISH-GL', sku:'SKU004', category:'家居用品', value:'18 USD', forecastSize:'8 * 8 * 24 公制', forecastWeight:'0.33 公制', actualSize:'8 * 8 * 25 公制', actualWeight:'0.35 公制' },
+  { warehouseCode:'USGA12', cnName:'折叠雨伞', enName:'Compact Folding Umbrella', cnDeclare:'折叠伞', enDeclare:'Folding Umbrella', productCode:'PROD-005', customCode:'CUSTOM-005', platformCode:'AMZ-CA', sku:'SKU005', category:'户外用品', value:'12 USD', forecastSize:'5 * 5 * 28 公制', forecastWeight:'0.38 公制', actualSize:'5 * 5 * 29 公制', actualWeight:'0.39 公制' },
+  { warehouseCode:'USTX03', cnName:'帆布双肩包', enName:'Canvas Backpack', cnDeclare:'帆布包', enDeclare:'Canvas Bag', productCode:'PROD-006', customCode:'CUSTOM-006', platformCode:'EBAY-UK', sku:'SKU006', category:'箱包', value:'35 USD', forecastSize:'29 * 14 * 44 公制', forecastWeight:'0.85 公制', actualSize:'30 * 15 * 45 公制', actualWeight:'0.88 公制' },
+];
+const TOTAL = 56, PAGE_SIZE = 20, TOTAL_PAGES = Math.ceil(TOTAL / PAGE_SIZE);
+
+function renderTable(){
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = TABLE_DATA.map((row,i) => `
+    <tr class="row-main" data-card="${i}">
+      <td><input type="checkbox" /></td>
+      <td><div class="field"><span class="f-val" style="color:var(--text);font-weight:500">${row.warehouseCode||'—'}</span></div></td>
+      <td>
+        <div class="field${i===0?' proto-element':''}"${i===0?' data-proto-id="3"':''}><span class="f-label">中文商品名称：</span><span class="f-val cell-sku"${i===0?' data-proto-id="6"':''} onclick="openDrawer('${row.sku}')">${row.cnName||'—'}</span></div>
+        <div class="field"><span class="f-label">英文商品名称：</span><span class="f-val">${row.enName||'—'}</span></div>
+        <div class="field"><span class="f-label">中文申报品名：</span><span class="f-val">${row.cnDeclare||'—'}</span></div>
+        <div class="field"><span class="f-label">英文申报品名：</span><span class="f-val">${row.enDeclare||'—'}</span></div>
+      </td>
+      <td>
+        <div class="field"><span class="f-label">商品代码：</span><span class="f-val">${row.productCode||'—'}</span></div>
+        <div class="field"><span class="f-label">自定义编码：</span><span class="f-val">${row.customCode||'—'}</span></div>
+        <div class="field"><span class="f-label">平台编码：</span><span class="f-val">${row.platformCode||'—'}</span></div>
+        <div class="field"><span class="f-label">SKU：</span><span class="f-val">${row.sku||'—'}</span></div>
+      </td>
+      <td>
+        <div class="field"><span class="f-label">品类：</span><span class="f-val">${row.category||'—'}</span></div>
+        <div class="field"><span class="f-label">货值：</span><span class="f-val">${row.value||'—'}</span></div>
+      </td>
+      <td>
+        <div class="field"><span class="f-label">预报尺寸：</span><span class="f-val">${row.forecastSize||'—'}</span></div>
+        <div class="field"><span class="f-label">预报重量：</span><span class="f-val">${row.forecastWeight||'—'}</span></div>
+        <div class="field"><span class="f-label">实际尺寸：</span><span class="f-val">${row.actualSize||'—'}</span></div>
+        <div class="field"><span class="f-label">实际重量：</span><span class="f-val">${row.actualWeight||'—'}</span></div>
+      </td>
+    </tr>
+    <tr class="gap"><td colspan="6"></td></tr>`
+  ).join('');
+}
+
+let currentPage = 1;
+function renderPagination(){
+  const el = document.getElementById('pagination');
+  let nums = '';
+  for(let i=1;i<=Math.min(TOTAL_PAGES,6);i++) nums += `<span class="pg ${i===currentPage?'active':''}" onclick="goPage(${i})">${i}</span>`;
+  if(TOTAL_PAGES>6) nums += `<span class="pg pg-arrow disabled">...</span>`;
+  el.innerHTML = `<div class="pag-left">共 <b>${TOTAL}</b> 条<select class="pag-select"><option>${PAGE_SIZE}条/页</option><option>50条/页</option><option>100条/页</option></select></div><div class="pag-right"><div class="pag-nums"><span class="pg pg-arrow ${currentPage<=1?'disabled':''}" onclick="prevPage()">&lt;</span>${nums}<span class="pg pg-arrow ${currentPage>=TOTAL_PAGES?'disabled':''}" onclick="nextPage()">&gt;</span></div> 前往<input class="pag-jump" type="text" value="${currentPage}" onkeydown="if(event.key==='Enter')jumpTo(this)" />页</div>`;
+}
+function goPage(page){ page=parseInt(page,10); if(isNaN(page)||page<1)page=1; if(page>TOTAL_PAGES)page=TOTAL_PAGES; currentPage=page; renderPagination(); renderTable(); }
+function prevPage(){ goPage(currentPage-1); }
+function nextPage(){ goPage(currentPage+1); }
+function jumpTo(input){ goPage(input.value); }
+
+function openDrawer(sku){
+  const row = TABLE_DATA.find(r => r.sku === sku); if(!row) return;
+  document.getElementById('drawTitle').textContent = row.sku + ' 详情';
+  document.getElementById('drawSub').textContent = '仓库：' + row.warehouseCode + ' / SKU：' + row.sku;
+  document.getElementById('drawerBody').innerHTML = `
+    <div><div class="dsec-title">仓库信息</div><div class="dfield"><span class="dfield-label">仓库代码</span><span class="dfield-value">${row.warehouseCode||'—'}</span></div></div>
+    <div><div class="dsec-title">商品信息</div>
+      <div class="dfield"><span class="dfield-label">中文商品名称</span><span class="dfield-value">${row.cnName||'—'}</span></div>
+      <div class="dfield"><span class="dfield-label">英文商品名称</span><span class="dfield-value">${row.enName||'—'}</span></div>
+      <div class="dfield"><span class="dfield-label">中文申报品名</span><span class="dfield-value">${row.cnDeclare||'—'}</span></div>
+      <div class="dfield"><span class="dfield-label">英文申报品名</span><span class="dfield-value">${row.enDeclare||'—'}</span></div>
+    </div>
+    <div><div class="dsec-title">编码信息</div>
+      <div class="dfield"><span class="dfield-label">商品代码</span><span class="dfield-value">${row.productCode||'—'}</span></div>
+      <div class="dfield"><span class="dfield-label">自定义编码</span><span class="dfield-value">${row.customCode||'—'}</span></div>
+      <div class="dfield"><span class="dfield-label">平台编码</span><span class="dfield-value">${row.platformCode||'—'}</span></div>
+      <div class="dfield"><span class="dfield-label">SKU</span><span class="dfield-value">${row.sku||'—'}</span></div>
+    </div>
+    <div><div class="dsec-title">商品属性</div>
+      <div class="dfield"><span class="dfield-label">品类</span><span class="dfield-value">${row.category||'—'}</span></div>
+      <div class="dfield"><span class="dfield-label">货值</span><span class="dfield-value">${row.value||'—'}</span></div>
+    </div>
+    <div><div class="dsec-title">规格信息</div>
+      <div class="dfield"><span class="dfield-label">预报尺寸</span><span class="dfield-value">${row.forecastSize||'—'}</span></div>
+      <div class="dfield"><span class="dfield-label">预报重量</span><span class="dfield-value">${row.forecastWeight||'—'}</span></div>
+      <div class="dfield"><span class="dfield-label">实际尺寸</span><span class="dfield-value">${row.actualSize||'—'}</span></div>
+      <div class="dfield"><span class="dfield-label">实际重量</span><span class="dfield-value">${row.actualWeight||'—'}</span></div>
+    </div>`;
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('drawer').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeDrawer(){
+  document.getElementById('overlay').classList.remove('open');
+  document.getElementById('drawer').classList.remove('open');
+  document.body.style.overflow='';
+}
+document.getElementById('overlay').onclick = closeDrawer;
+document.getElementById('drawerClose').onclick = closeDrawer;
+document.addEventListener('keydown', e => { if(e.key === 'Escape') closeDrawer(); });
+
+const _filterPanel = document.querySelector('.filter-panel');
+if(_filterPanel){
+  _filterPanel.addEventListener('click', e => {
+    const btn = e.target.closest('.input-clear');
+    if(!btn) return;
+    const wrap = btn.closest('.input-wrap');
+    const input = wrap.querySelector('input');
+    if(input){ input.value = ''; input.focus(); }
+  });
+}
+function doSearch(btn){ renderTable(); }
+
+const CATEGORY_TREE = [
+  { label:'摩托车&摩托车配件', value:'cat_moto', children:[
+      { label:'摩托车配件', value:'cat_moto_parts', children:[
+          { label:'通用支架', value:'bracket_universal' }, { label:'支架垫板', value:'bracket_pad' },
+          { label:'赛车计时器/计圈器', value:'racing_timer' }, { label:'摩托车后视镜', value:'moto_mirror' },
+      ]}
+  ]},
+  { label:'婴儿用品', value:'baby', children:[] },
+  { label:'数码相机/摄像机', value:'camera', children:[] },
+  { label:'商业及工业', value:'commercial', children:[] },
+  { label:'手机与配件', value:'mobile', children:[] },
+];
+let categorySelected = null;
+function renderCategoryTree(filter){
+  const el = document.getElementById('categoryList');
+  const kw = (filter || '').toLowerCase().trim();
+  el.innerHTML = buildTreeHtml(CATEGORY_TREE, kw, 0);
+}
+function buildTreeHtml(nodes, kw, depth){
+  if(!nodes || !nodes.length) return '';
+  return nodes.map(node => {
+    const hasChildren = node.children && node.children.length > 0;
+    const isL1 = depth === 0, isL2 = depth === 1, isL3 = depth === 2;
+    let show = !kw;
+    if(kw && node.label.toLowerCase().includes(kw)) show = true;
+    if(kw && hasChildren){
+      function checkChildren(children){ for(const c of children){ if(c.label.toLowerCase().includes(kw)) return true; if(c.children && checkChildren(c.children)) return true; } return false; }
+      if(checkChildren(node.children)) show = true;
+    }
+    let html = '';
+    if(isL1 || isL2){
+      html += `<div class="ss-item l${depth+1}" data-val="${node.value}">
+        <span class="ss-arrow ${hasChildren?'':'disabled'}" ${hasChildren?'onclick="event.stopPropagation();toggleTreeNode(this)" title="展开/收起"':''}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </span>
+        <span class="ss-label disabled">${node.label}</span>
+      </div>`;
+      if(hasChildren) html += `<div class="ss-children">${buildTreeHtml(node.children, kw, depth+1)}</div>`;
+    } else if(isL3){
+      const sel = categorySelected && categorySelected.value === node.value;
+      html += `<div class="ss-item l3 ${sel?'selected':''}" data-val="${node.value}" onclick="selectCategory(this,'${node.value}','${node.label}')"><span class="ss-label">${node.label}</span></div>`;
+    }
+    return show ? html : '';
+  }).join('');
+}
+function toggleTreeNode(arrowEl){
+  const parentItem = arrowEl.closest('.ss-item');
+  const childrenContainer = parentItem.nextElementSibling;
+  if(!childrenContainer || !childrenContainer.classList.contains('ss-children')) return;
+  const isOpen = childrenContainer.classList.contains('open');
+  if(isOpen){ childrenContainer.classList.remove('open'); arrowEl.classList.remove('expanded'); }
+  else { childrenContainer.classList.add('open'); arrowEl.classList.add('expanded'); }
+}
+function selectCategory(el, val, label){
+  document.querySelectorAll('.ss-item.l3.selected').forEach(n => n.classList.remove('selected'));
+  el.classList.add('selected');
+  categorySelected = { value:val, label:label };
+  confirmCategory();
+}
+function confirmCategory(){
+  closeSearchSelect('categorySelect');
+  const trigger = document.querySelector('#categorySelect .ss-placeholder');
+  const container = document.getElementById('categorySelect');
+  if(categorySelected){ trigger.textContent = categorySelected.label; container.classList.add('has-value'); }
+  else { trigger.textContent = '请选择商品品类'; container.classList.remove('has-value'); }
+}
+function clearCategory(){
+  categorySelected = null;
+  document.querySelector('#categorySelect .ss-placeholder').textContent = '请选择商品品类';
+  document.getElementById('categorySelect').classList.remove('has-value');
+}
+function resetFilters(){
+  document.querySelectorAll('.filter-panel input[type="text"]').forEach(input => { input.value = ''; });
+  const whSelect = document.getElementById('warehouseSelect');
+  if(whSelect) whSelect.selectedIndex = 0;
+  const wtSelect = document.getElementById('weightSelect');
+  if(wtSelect) wtSelect.selectedIndex = 0;
+  clearCategory();
+}
+function expandFirstNode(){
+  const firstArrow = document.querySelector('#categoryList .ss-arrow:not(.invisible)');
+  if(firstArrow) toggleTreeNode(firstArrow);
+}
+function closeSearchSelect(id){ document.getElementById(id).classList.remove('open'); }
+
+/* 启动：先同步渲染表格（保证 Pin 红点能扫描到动态行），再绑定交互 */
+renderTable();
+renderPagination();
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelector('.filter-panel').addEventListener('click', e => e.stopPropagation());
+  document.querySelectorAll('.search-select-panel').forEach(p => { p.addEventListener('click', e => e.stopPropagation()); });
+  document.querySelectorAll('.search-select-trigger').forEach(t => {
+    t.parentElement.addEventListener('click', e => {
+      e.stopPropagation();
+      const open = t.parentElement.classList.contains('open');
+      document.querySelectorAll('.search-select').forEach(s => s.classList.remove('open'));
+      if(!open){ t.parentElement.classList.add('open'); renderCategoryTree(''); expandFirstNode(); const si = t.parentElement.querySelector('.ss-search'); if(si) si.focus(); }
+    });
+  });
+  const ssSearch = document.querySelector('#categorySelect .ss-search');
+  if(ssSearch) ssSearch.addEventListener('input', e => renderCategoryTree(e.target.value));
+  document.addEventListener('click', e => {
+    if(!e.target.closest('.search-select')) document.querySelectorAll('.search-select').forEach(s => s.classList.remove('open'));
+  });
+
+  const tbody = document.getElementById('tableBody');
+  tbody.addEventListener('mouseover', e => {
+    const tr = e.target.closest('tr[data-card]');
+    if(!tr) return;
+    const card = tr.getAttribute('data-card');
+    tbody.querySelectorAll(`tr[data-card="${card}"]`).forEach(r => r.classList.add('hover'));
+  });
+  tbody.addEventListener('mouseout', e => {
+    const tr = e.target.closest('tr[data-card]');
+    if(!tr) return;
+    const card = tr.getAttribute('data-card');
+    tbody.querySelectorAll(`tr[data-card="${card}"]`).forEach(r => r.classList.remove('hover'));
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="Cache-Control" content="no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>客户中台</title>
+<style>
+  /* ============ 设计令牌（壳层常驻，与内容层共享语义色） ============ */
+  :root{
+    --primary:#1677ff;
+    --primary-hover:#4096ff;
+    --primary-active:#0958d9;
+    --primary-bg:rgba(22,119,255,0.06);
+    --primary-border:rgba(22,119,255,0.24);
+    --success:#52c41a;
+    --warning:#faad14;
+    --danger:#ff4d4f;
+    --bg:#f5f7fa;
+    --surface:#ffffff;
+    --border:#e5e6eb;
+    --border-light:#f0f0f0;
+    --text:#1d2129;
+    --text-secondary:#4e5969;
+    --text-tertiary:#86909c;
+    --text-quaternary:#c9cdd4;
+    --radius-md:6px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Helvetica Neue',Helvetica,Arial,sans-serif;font-size:14px;color:var(--text)}
+  a{color:inherit;text-decoration:none}
+
+  /* ============ 顶栏 Header（全宽白底，内容区对齐） ============ */
+  .header{
+    position:sticky;top:0;z-index:100;
+    background:#fff;border-bottom:1px solid var(--border-light);height:56px;
+  }
+  .header-inner{
+    max-width:1400px;margin:0 auto;width:100%;
+    display:flex;align-items:center;height:100%;padding:0 24px;
+  }
+  .header-left{display:flex;align-items:center;gap:12px}
+  .logo-icon{
+    width:32px;height:32px;border-radius:6px;
+    background:linear-gradient(135deg,#1677ff 0%,#69b1ff 30%,#36cfc9 70%,#95de64 100%);
+    display:grid;place-items:center;flex-shrink:0;
+  }
+  .logo-icon svg{width:20px;height:20px}
+  .logo-text{display:flex;flex-direction:column;line-height:1.25}
+  .logo-title{font-size:16px;font-weight:600;color:var(--text)}
+  .logo-sub{font-size:11.5px;color:var(--text-tertiary);letter-spacing:.2px}
+  .header-right{margin-left:auto;display:flex;align-items:center;gap:16px}
+  .header-btn{
+    width:32px;height:32px;border-radius:50%;display:grid;place-items:center;
+    color:var(--text-secondary);transition:color .2s,background .2s;position:relative;
+  }
+  .header-btn:hover{color:var(--primary);background:var(--primary-bg)}
+  .header-btn .dot{position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:var(--danger);border:2px solid #fff}
+  .header-btn svg{width:18px;height:18px}
+  .user-info{display:flex;align-items:center;gap:6px;cursor:pointer;padding:4px 8px;border-radius:var(--radius-md);transition:background .2s;font-size:13.5px;color:var(--text-secondary)}
+  .user-info:hover{background:var(--bg)}
+  .user-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#1677ff,#69b1ff);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:600}
+  .user-name{max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+  /* ============ Header 内导航（Logo 右侧同一行，后续模块依次添加） ============ */
+  .header-nav{display:flex;align-items:center;gap:4px;margin-left:24px}
+  .hnav-item{
+    display:inline-flex;align-items:center;padding:0 14px;height:40px;font-size:14px;
+    color:var(--text-secondary);border-radius:var(--radius-md);white-space:nowrap;transition:color .2s;cursor:pointer;
+  }
+  .hnav-item:hover{color:var(--primary)}
+  .hnav-item.active{color:var(--primary);font-weight:500}
+  /* 一级菜单带二级下拉 */
+  .hnav-dropdown{position:relative}
+  .hnav-trigger{display:inline-flex;align-items:center;gap:4px}
+  .hnav-menu{
+    position:absolute;top:calc(100% - 2px);left:0;min-width:140px;
+    background:#fff;border:1px solid var(--border-light);border-radius:var(--radius-md);
+    box-shadow:0 6px 16px rgba(0,0,0,.08),0 3px 6px -3px rgba(0,0,0,.12);
+    padding:6px;display:none;z-index:200;
+  }
+  .hnav-dropdown:hover .hnav-menu{display:block}
+  .hnav-sub{
+    display:block;padding:8px 14px;font-size:14px;color:var(--text-secondary);
+    border-radius:var(--radius-md);white-space:nowrap;transition:color .2s,background .2s;cursor:pointer;
+  }
+  .hnav-sub:hover{color:var(--primary);background:var(--bg)}
+  .hnav-sub.active{color:var(--primary);font-weight:500;background:var(--bg)}
+
+  /* ============ 内容 iframe ============ */
+  #contentFrame{display:block;width:100%;border:none;background:var(--bg);min-height:600px}
+  @media (max-width:900px){.header-inner{padding:0 16px}.header-nav{margin-left:12px}}
+  @media (max-width:600px){.header-inner{padding:0 12px}.header-nav{margin-left:8px}}
+  @media (prefers-reduced-motion:reduce){*{animation-duration:0!important;transition-duration:0!important}}
+</style>
+</head>
+<body>
+
+<!-- ============ 顶栏（固定壳，常驻不随内容 reload） ============ -->
+<header class="header">
+  <div class="header-inner">
+    <div class="header-left">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="8" height="8" rx="2" fill="#fff" fill-opacity=".9"/><rect x="13" y="3" width="8" height="8" rx="2" fill="#fff" fill-opacity=".7"/><rect x="3" y="13" width="8" height="8" rx="2" fill="#fff" fill-opacity=".6"/><rect x="13" y="13" width="8" height="8" rx="2" fill="#fff" fill-opacity=".4"/></svg>
+      </div>
+      <div class="logo-text">
+        <span class="logo-title">客户中台</span>
+        <span class="logo-sub">Customer Center</span>
+      </div>
+      <!-- 导航项：Logo 右侧同一行，后续模块依次添加（data-page 对应 content-<page>.html） -->
+      <nav class="header-nav" id="headerNav">
+        <a class="hnav-item" href="#" data-page="home">首页</a>
+        <div class="hnav-dropdown">
+          <span class="hnav-item hnav-trigger">基础数据 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></span>
+          <div class="hnav-menu">
+            <a class="hnav-sub active" href="#" data-page="shangpin">商品管理</a>
+            <a class="hnav-sub" href="#" data-page="cangku">仓库商品</a>
+            <a class="hnav-sub" href="#" data-page="pinlei">品类管理</a>
+          </div>
+        </div>
+      </nav>
+    </div>
+    <div class="header-right">
+      <button class="header-btn" aria-label="通知">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><span class="dot"></span></svg>
+      </button>
+      <div class="user-info">
+        <div class="user-avatar">支</div>
+        <span class="user-name">support...</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ============ 业务内容（远程加载） ============ -->
+<iframe id="contentFrame" title="客户中台内容区"></iframe>
+
+<script>
+/* ============ 内容加载 ============ */
+// 内容源：默认同目录 content-<page>.html（首页→content-home.html，商品管理→content-shangpin.html）
+const CONTENT_BASE = './';
+const FRAME = document.getElementById('contentFrame');
+// 初始加载带时间戳，绕过浏览器缓存（否则改了内容页却看不到变化）
+FRAME.src = CONTENT_BASE + 'content-shangpin.html?t=' + Date.now();
+
+// 内容区高度自适应（content 通过 postMessage 上报）
+window.addEventListener('message', e => {
+  if(e.data && e.data.type === 'resize'){
+    FRAME.style.height = e.data.height + 'px';
+  }
+});
+
+// 导航路由（点击切换 content-<page>.html）
+document.getElementById('headerNav').addEventListener('click', e => {
+  const item = e.target.closest('[data-page]');
+  if(!item) return;
+  e.preventDefault();
+  document.querySelectorAll('.hnav-item,.hnav-sub').forEach(n => n.classList.remove('active'));
+  item.classList.add('active');
+  const page = item.dataset.page || 'home';
+  FRAME.src = CONTENT_BASE + 'content-' + page + '.html?t=' + Date.now();
+});
+
+</script>
+</body>
+</html>
