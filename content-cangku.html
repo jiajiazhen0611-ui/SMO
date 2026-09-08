@@ -59,7 +59,7 @@ body {
 .doc-fab.hidden { display: none; }
 .doc-panel {
   position: fixed; right: 24px; top: 80px; z-index: 210;   /* top 由 JS 动态定位：展开时对齐搜索框顶部 */
-  width: 360px; max-height: calc(100vh - 104px); overflow-y: auto;
+  width: min(360px, 32vw); max-height: calc(100vh - 104px); overflow-y: auto;
   background: var(--amber-bg); border: 1px solid var(--amber-border);
   border-radius: 12px; padding: 16px 18px 12px; box-sizing: border-box;
   -webkit-backdrop-filter: blur(14px) saturate(140%);
@@ -150,6 +150,11 @@ body {
   .doc-panel { right: 16px; left: 16px; width: auto; bottom: 80px; max-height: 70vh; }
   .pin-overlay { display: none; }
   .sidebar { display: none; }
+}
+/* 功能说明浮窗响应式（SKILL 十·补）：<1024 底部上滑卡，不整幅遮挡页面 */
+@media (max-width: 1024px) {
+  .doc-panel { left: 12px; right: 12px; bottom: 12px; top: auto !important; width: auto; max-height: min(58vh, calc(100vh - 90px)); transform-origin: center bottom; border-radius: 14px; }
+  .doc-fab { right: 16px; bottom: 16px; top: auto; transform: none; padding: 10px 16px; }
 }
 </style>
 
@@ -597,6 +602,7 @@ function togglePins(){
 function positionDocPanel(){
   var panel = document.getElementById('rightPanel');
   if(!panel) return;
+  if(window.innerWidth < 1024){ panel.style.top = ''; panel.style.maxHeight = ''; return; } /* 窄屏=底部卡，不设顶部 */
   var sb = document.querySelector('.filter-panel .input-wrap input');
   var top = 80;
   if(sb){
