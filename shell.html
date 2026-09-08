@@ -111,11 +111,11 @@
       </div>
       <!-- 导航项：Logo 右侧同一行，后续模块依次添加（data-page 对应 content-<page>.html） -->
       <nav class="header-nav" id="headerNav">
-        <a class="hnav-item" href="#" data-page="home">首页</a>
+        <a class="hnav-item active" href="#" data-page="home">首页</a>
         <div class="hnav-dropdown">
           <span class="hnav-item hnav-trigger">基础数据 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></span>
           <div class="hnav-menu">
-            <a class="hnav-sub active" href="#" data-page="shangpin">商品管理</a>
+            <a class="hnav-sub" href="#" data-page="shangpin">商品管理</a>
             <a class="hnav-sub" href="#" data-page="cangku">仓库商品</a>
             <a class="hnav-sub" href="#" data-page="pinlei">品类管理</a>
           </div>
@@ -144,7 +144,8 @@
 const CONTENT_BASE = './';
 const FRAME = document.getElementById('contentFrame');
 // 初始加载带时间戳，绕过浏览器缓存（否则改了内容页却看不到变化）
-FRAME.src = CONTENT_BASE + 'content-shangpin.html?t=' + Date.now();
+// 默认显示首页（content-home.html），见 https://jiajiazhen0611-ui.github.io/SMO/
+FRAME.src = CONTENT_BASE + 'content-home.html?t=' + Date.now();
 
 // 内容区高度自适应（content 通过 postMessage 上报）
 window.addEventListener('message', e => {
