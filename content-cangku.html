@@ -1245,5 +1245,19 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 })();
 </script>
+<style>.proto-element:hover,.proto-element.active-highlight,.proto-element.pin-highlighted{box-shadow:none!important;background-color:transparent!important}</style>
+<script>
+/* 关闭旧 proto 标注在区域上的悬停高亮：新模型只由两枚 PRD 控制区域高亮 */
+(function(){
+  try{
+    var pes = document.querySelectorAll('.proto-element');
+    for(var j = 0; j < pes.length; j++){ pes[j].classList.remove('proto-element'); }
+    var ovs = document.querySelectorAll('.pin-overlay');
+    for(var i = 0; i < ovs.length; i++){ var o = ovs[i]; if(o && o.parentNode) o.parentNode.removeChild(o); }
+    window.highlightPin = function(){};
+    window.clearPinHighlight = function(){};
+  }catch(e){}
+})();
+</script>
 </body>
 </html>
