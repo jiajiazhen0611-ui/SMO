@@ -112,12 +112,46 @@
       <!-- 导航项：Logo 右侧同一行，后续模块依次添加（data-page 对应 content-<page>.html） -->
       <nav class="header-nav" id="headerNav">
         <a class="hnav-item active" href="#" data-page="home">首页</a>
+        <!-- 打单系统 -->
+        <div class="hnav-dropdown">
+          <span class="hnav-item hnav-trigger">打单系统 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></span>
+          <div class="hnav-menu">
+            <a class="hnav-sub" href="#" data-page="yundan">运单</a>
+          </div>
+        </div>
+        <!-- 库存管理 -->
+        <div class="hnav-dropdown">
+          <span class="hnav-item hnav-trigger">库存管理 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></span>
+          <div class="hnav-menu">
+            <a class="hnav-sub" href="#" data-page="kucun">库存查询</a>
+            <a class="hnav-sub" href="#" data-page="pici">批次库存</a>
+          </div>
+        </div>
+        <!-- 财务管理 -->
+        <div class="hnav-dropdown">
+          <span class="hnav-item hnav-trigger">财务管理 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></span>
+          <div class="hnav-menu">
+            <a class="hnav-sub" href="#" data-page="yingshoufeiyong">应收费用管理</a>
+            <a class="hnav-sub" href="#" data-page="yingfufeiyong">应付费用管理</a>
+            <a class="hnav-sub" href="#" data-page="yingshouzhangdan">应收帐单</a>
+            <a class="hnav-sub" href="#" data-page="zijinliushui">资金流水</a>
+          </div>
+        </div>
+        <!-- 基础数据 -->
         <div class="hnav-dropdown">
           <span class="hnav-item hnav-trigger">基础数据 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></span>
           <div class="hnav-menu">
             <a class="hnav-sub" href="#" data-page="shangpin">商品管理</a>
             <a class="hnav-sub" href="#" data-page="cangku">仓库商品</a>
             <a class="hnav-sub" href="#" data-page="pinlei">品类管理</a>
+          </div>
+        </div>
+        <!-- 系统设置 -->
+        <div class="hnav-dropdown">
+          <span class="hnav-item hnav-trigger">系统设置 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></span>
+          <div class="hnav-menu">
+            <a class="hnav-sub" href="#" data-page="apishouquan">API授权</a>
+            <a class="hnav-sub" href="#" data-page="yonghu">用户管理</a>
           </div>
         </div>
       </nav>
