@@ -298,7 +298,8 @@ body {
   tbody tr.row-main td:nth-child(3) .f-label{flex-basis:7em}  /* 商品名称列：中文/英文商品名称：=7字 */
   tbody tr.row-main td:nth-child(4) .f-label{flex-basis:6em}  /* 商品编码列：自定义编码：=6字 */
   tbody tr.row-main td:nth-child(5) .f-label{flex-basis:3em}  /* 商品属性列：品类：/货值：=3字 */
-  tbody tr.row-main td:nth-child(6) .f-label{flex-basis:8em}  /* 规格信息列：预报尺寸/重量：=8字 */
+  tbody tr.row-main td:nth-child(6) .f-label{flex-basis:7.5em}  /* 规格信息列：预报尺寸/重量：≈7.5em（CJK+全角冒号=1em、半角/≈0.5em），保证最长标签左缘贴齐列标题 */
+  tbody tr.row-main td:nth-child(6) .field .f-val{white-space:nowrap}  /* 长单行值（尺寸/重量合并）禁止换行 */
   tbody tr.row-main td:nth-child(2){min-width:0}
   .action-btns{display:flex;gap:8px;justify-content:flex-end}
   .abtn{padding:3px 12px;border-radius:var(--radius-sm);font-size:12px;font-weight:400;transition:all .2s}
@@ -424,13 +425,13 @@ body {
               <thead>
                 <tr>
                   <th style="width:36px"><input type="checkbox" id="checkAll" /></th>
-                  <th style="width:17%">仓库</th>
+                  <th style="width:15%">仓库</th>
                   <!-- ③ 字段冒号对齐（Pin 3 标注首行 中文商品名称 字段） -->
-                  <th style="width:26%">商品名称</th>
-                  <th style="width:20%">商品编码</th>
-                  <th style="width:18%">商品属性</th>
+                  <th style="width:24%">商品名称</th>
+                  <th style="width:19%">商品编码</th>
+                  <th style="width:16%">商品属性</th>
                   <!-- ④ 公制单位（Pin 4） -->
-                  <th style="width:19%" data-proto-id="4">规格信息</th>
+                  <th style="width:26%" data-proto-id="4">规格信息</th>
                 </tr>
               </thead>
               <tbody id="tableBody"></tbody>
