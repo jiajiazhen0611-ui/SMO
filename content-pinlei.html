@@ -30,12 +30,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang SC
 /* 树顶栏：搜索 + 重置 + ⋮菜单 */
 .tree-header{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border-light);background:#fafbfc;flex-shrink:0}
 .tree-search-wrap{position:relative;flex:1;min-width:0}
-.tree-search{height:30px;border:1px solid var(--border);border-radius:var(--radius-sm);padding:0 28px 0 9px;width:100%;font-size:13px;outline:none;background:var(--surface);color:var(--text);transition:border-color .2s,box-shadow .2s}
+.tree-search{height:32px;border:1px solid var(--border);border-radius:var(--radius-md);padding:0 46px 0 11px;width:100%;font-size:13.5px;outline:none;background:var(--surface);color:var(--text);transition:border-color .2s,box-shadow .2s}
 .tree-search:focus{border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-bg)}
-.tree-search::placeholder{color:var(--text-quaternary);font-size:13px}
-.tree-search-clear{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:16px;height:16px;border:none;border-radius:50%;background:transparent;display:grid;place-items:center;cursor:pointer;opacity:0;transition:opacity .15s,color:.15s;color:var(--text-tertiary);padding:0;line-height:1}
+.tree-search::placeholder{color:var(--text-quaternary);font-size:13.5px}
+.tree-search-clear{position:absolute;right:28px;top:50%;transform:translateY(-50%);width:18px;height:18px;border:none;border-radius:50%;background:var(--bg);display:grid;place-items:center;cursor:pointer;opacity:0;transition:opacity .15s,color .15s;color:var(--text-tertiary);padding:0;line-height:1;z-index:1}
 .tree-search-wrap:hover .tree-search-clear{opacity:1}
-.tree-search-clear:hover{background:var(--bg);color:var(--text-secondary)}
+.tree-search-clear:hover{background:#e8eaed;color:var(--text-secondary)}
+.tree-search-clear svg{width:10px;height:10px}
+.tree-search-icon{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:18px;height:18px;border:none;background:transparent;display:grid;place-items:center;cursor:pointer;color:var(--text-tertiary);padding:0;line-height:1;transition:color .15s}
+.tree-search-icon:hover{color:var(--primary)}
+.tree-search-icon svg{width:14px;height:14px}
 .tree-reset-btn{height:30px;padding:0 12px;background:var(--primary);color:#fff;border:1px solid var(--primary);border-radius:var(--radius-sm);font-size:13px;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:background .2s}
 .tree-reset-btn:hover{background:var(--primary-hover)}
 /* ⋮ 菜单 */
@@ -135,8 +139,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang SC
 
 /* ---------- 日期面板：顶部时间行 + 底部清空/确定 + 时间滚动选择 ---------- */
 .dp-times{display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:nowrap}
-.dpt-date{flex:1;min-width:0;height:30px;border:1px solid var(--border);border-radius:var(--radius-sm);text-align:center;font-size:13px;color:var(--text);background:#fff;outline:none}
-.dpt-time{flex:1;min-width:0;height:30px;border:1px solid var(--border);border-radius:var(--radius-sm);text-align:center;font-size:13px;color:var(--text);background:#fff;outline:none;cursor:pointer}
+.dpt-date{flex:none;width:106px;height:30px;border:1px solid var(--border);border-radius:var(--radius-sm);text-align:center;font-size:13px;color:var(--text);background:#fff;outline:none}
+.dpt-date::placeholder{color:var(--text-quaternary)}
+.dpt-time{flex:none;width:82px;height:30px;border:1px solid var(--border);border-radius:var(--radius-sm);text-align:center;font-size:13px;color:var(--text);background:#fff;outline:none;cursor:pointer}
 .dpt-time::placeholder{color:var(--text-quaternary)}
 .dpt-time:focus,.dpt-time:hover{border-color:var(--primary)}
 .dpt-arrow{color:var(--text-tertiary);flex-shrink:0}
@@ -210,7 +215,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang SC
   <div class="tree-header">
     <div class="tree-search-wrap">
       <input class="tree-search" id="treeSearch" placeholder="请输入关键字" />
-      <button class="tree-search-clear" onclick="document.getElementById('treeSearch').value='';this.style.opacity='0'" title="清除">✕</button>
+      <button class="tree-search-clear" aria-label="清除" onclick="var i=document.getElementById('treeSearch');i.value='';i.focus()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      <button class="tree-search-icon" aria-label="搜索"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></button>
     </div>
     <button class="tree-reset-btn" onclick="resetTree()">重置</button>
     <div class="tree-more">
@@ -404,10 +410,11 @@ function renderTree(items, container, level){
     row.dataset.id = item.id;
     row.onclick=function(e){ e.stopPropagation(); selectNode(item.id); };
 
-    // 箭头
+    // 箭头（一级品类恒显示朝右箭头作为展开语义；不为其新增二级示例，无子级时点击无副作用）
     var arrow = document.createElement('span');
-    arrow.className = 'tree-arrow' + (hasChildren ? '' : ' leaf');
-    if(hasChildren) arrow.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>';
+    var expandable = hasChildren || level === 0;
+    arrow.className = 'tree-arrow' + (expandable ? '' : ' leaf');
+    if(expandable) arrow.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>';
     arrow.onclick=function(e){ e.stopPropagation(); toggleNode(item.id); };
 
     // 标签
