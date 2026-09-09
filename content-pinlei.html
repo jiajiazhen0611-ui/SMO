@@ -901,33 +901,48 @@ window.addEventListener('resize', postHeight);
 })();
 </script>
 <script>
-/* ===== 卡片区单 Pin + 浮窗（内容：标题 / 操作按钮 / 状态说明；绿色主题） ===== */
+/* ===== 卡片区单 Pin + 浮窗（内容按实际取舍：只读字段卡无操作按钮 → 标题 + 状态说明；绿色主题） ===== */
 (function(){
   var cfg = {
     title: '卡片区说明',
-    titles: [
-      { name: '品类名称', rows: [
-        ['中文名称', '品类级联选择中的显示名（中文），如「摩托车&摩托车配件」'],
-        ['英文名称', '品类的中文对照英文名，用于导出与多语言展示，如「Motorcycle & Parts」']
-      ]},
-      { name: '品类结构', rows: [
-        ['品类等级', '该品类所处的层级（一级/二级/三级）'],
-        ['父级品类', '其所属的上一级品类名；一级品类为「—」']
-      ]},
-      { name: '创建信息', rows: [
-        ['创建人', '录入该品类的操作人账号'],
-        ['创建日期', '创建/录入日期（yyyy-mm-dd）']
-      ]}
-    ],
-    buttons: [
-      ['（左树）点选一级/二级品类', '启用', '卡片区内容刷新入口：显示其全部直接下级的字段卡'],
-      ['（左树）点选三级叶子品类', '启用', '无下级可展示 → 卡片区保留一张卡并提示「暂无数据」'],
-      ['卡片行内操作（新增下级/编辑/禁用）', '未提供（只读）', '当前原型字段卡为只读信息卡，无行内按钮；状态仅通过右上角角标静态标注']
-    ],
-    statuses: [
-      ['启用（浅绿角标）', '品类可用、可挂接商品；示例：通用支架、支架垫板'],
-      ['禁止（淡红角标）', '品类停用，不再挂接新商品；示例：赛车计时器/计圈器、摩托车后视镜'],
-      ['无角标', '数据未携带状态（示例中一级/二级品类卡）或叶子「暂无数据」卡，均不显示角标']
+    /* 区域 PRD 按实际内容取舍：本卡片区为只读字段卡，无操作按钮，故仅含 标题 + 状态说明。
+       secs 里有什么就渲染什么，序号自动连续；此处结构即为「非固定三件套」的实现方式。 */
+    secs: [
+      { name: '标题', build: function(){
+          var h = '';
+          this.titles.forEach(function(g){
+            h += '<div class="psec-sub">' + g.name + '</div>';
+            h += '<div class="prow prow2 head"><span>字段</span><span>说明</span></div>';
+            g.rows.forEach(function(r){ h += '<div class="prow prow2"><span>' + r[0] + '</span><span>' + r[1] + '</span></div>'; });
+          });
+          return h;
+        },
+        titles: [
+          { name: '品类名称', rows: [
+            ['中文名称', '品类级联选择中的显示名（中文），如「摩托车&摩托车配件」'],
+            ['英文名称', '品类的中文对照英文名，用于导出与多语言展示，如「Motorcycle & Parts」']
+          ]},
+          { name: '品类结构', rows: [
+            ['品类等级', '该品类所处的层级（一级/二级/三级）'],
+            ['父级品类', '其所属的上一级品类名；一级品类为「—」']
+          ]},
+          { name: '创建信息', rows: [
+            ['创建人', '录入该品类的操作人账号'],
+            ['创建日期', '创建/录入日期（yyyy-mm-dd）']
+          ]}
+        ]
+      },
+      { name: '状态说明', build: function(){
+          var h = '<div class="prow prow2 head"><span>状态名</span><span>说明</span></div>';
+          this.statuses.forEach(function(r){ h += '<div class="prow prow2"><span>' + r[0] + '</span><span>' + r[1] + '</span></div>'; });
+          return h;
+        },
+        statuses: [
+          ['启用（浅绿角标）', '品类可用、可挂接商品；示例：通用支架、支架垫板'],
+          ['禁止（淡红角标）', '品类停用，不再挂接新商品；示例：赛车计时器/计圈器、摩托车后视镜'],
+          ['无角标', '数据未携带状态（示例中一级/二级品类卡）或叶子「暂无数据」卡，均不显示角标']
+        ]
+      }
     ]
   };
   var app = document.getElementById('appContainer');
@@ -945,19 +960,11 @@ window.addEventListener('resize', postHeight);
   posDot(); window.addEventListener('resize', posDot);
   var win = document.createElement('div'); win.className = 'pinwin theme-green'; win.style.display = 'none';
   var rows = '';
-  rows += '<div class="psec"><div class="psec-title"><span class="n">1</span>标题</div>';
-  cfg.titles.forEach(function(g){
-    rows += '<div class="psec-sub">' + g.name + '</div>';
-    rows += '<div class="prow prow2 head"><span>字段</span><span>说明</span></div>';
-    g.rows.forEach(function(r){ rows += '<div class="prow prow2"><span>' + r[0] + '</span><span>' + r[1] + '</span></div>'; });
+  cfg.secs.forEach(function(s, idx){
+    rows += '<div class="psec"><div class="psec-title"><span class="n">' + (idx + 1) + '</span>' + s.name + '</div>';
+    rows += s.build();
+    rows += '</div>';
   });
-  rows += '</div><div class="psec"><div class="psec-title"><span class="n">2</span>操作按钮</div>';
-  rows += '<div class="prow prow3 head"><span>按钮</span><span>状态</span><span>说明</span></div>';
-  cfg.buttons.forEach(function(r){ rows += '<div class="prow prow3"><span>' + r[0] + '</span><span>' + r[1] + '</span><span>' + r[2] + '</span></div>'; });
-  rows += '</div><div class="psec"><div class="psec-title"><span class="n">3</span>状态说明</div>';
-  rows += '<div class="prow prow2 head"><span>状态名</span><span>说明</span></div>';
-  cfg.statuses.forEach(function(r){ rows += '<div class="prow prow2"><span>' + r[0] + '</span><span>' + r[1] + '</span></div>'; });
-  rows += '</div>';
   win.innerHTML = '<div class="pinwin-head"><span class="pinwin-title">' + cfg.title + '</span><button class="pinwin-close" title="关闭">×</button></div><div class="pinwin-body">' + rows + '</div><div class="pinwin-rs" title="拖拽右下角缩放"></div>';
   document.body.appendChild(win);
   var head = win.querySelector('.pinwin-head'), close = win.querySelector('.pinwin-close'), rs = win.querySelector('.pinwin-rs');
