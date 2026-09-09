@@ -859,18 +859,18 @@ window.addEventListener('resize', postHeight);
   function refresh(){ panel.classList.toggle('apin-highlight', open || hovered); }
   dot.addEventListener('mouseenter', function(){ hovered = true; refresh(); });
   dot.addEventListener('mouseleave', function(){ hovered = false; refresh(); });
+  function docExt(){ var de=document.documentElement,b=document.body; return { w:Math.max(de.scrollWidth,b.scrollWidth?b.scrollWidth:0), h:Math.max(de.scrollHeight,b.scrollHeight?b.scrollHeight:0) }; }
+  function syncHeight(){ if(window.postHeight) window.postHeight(); }
+  /* 整页自由定位：不钳到视口，不因 iframe/页底被裁剪遮挡 */
   function position(){
     var p = panel.getBoundingClientRect();
-    var w = win.offsetWidth || 470, h = win.offsetHeight || 240;
     var sx = window.pageXOffset || 0, sy = window.pageYOffset || 0;
-    var vw = document.documentElement.clientWidth || window.innerWidth;
-    var L = Math.min(p.right + sx + 8, vw - w - 12); L = Math.max(8, L);
-    var T = Math.max(8, p.top + sy + 4);
-    win.style.left = L + 'px'; win.style.top = T + 'px';
+    win.style.left = Math.max(8, p.right + sx + 8) + 'px';
+    win.style.top = Math.max(8, p.top + sy + 4) + 'px';
   }
   function toggle(){
     if(open){ win.style.display = 'none'; open = false; }
-    else { win.style.display = 'flex'; position(); open = true; if(window.postHeight) window.postHeight(); }
+    else { win.style.display = 'flex'; position(); open = true; syncHeight(); }
     refresh();
   }
   dot.addEventListener('click', toggle);
@@ -879,20 +879,23 @@ window.addEventListener('resize', postHeight);
     if(e.target.closest('.pinwin-close')) return;
     var sx = e.clientX, sy = e.clientY, oL = win.offsetLeft, oT = win.offsetTop;
     function mv(ev){
-      win.style.left = Math.min(Math.max(ev.clientX - sx + oL, -win.offsetWidth + 90), window.innerWidth - 40) + 'px';
-      win.style.top = Math.min(Math.max(ev.clientY - sy + oT, 0), window.innerHeight - 40) + 'px';
+      var d = docExt();
+      var L = Math.min(Math.max(ev.clientX - sx + oL, -win.offsetWidth + 90), d.w - 40);
+      var T = Math.min(Math.max(ev.clientY - sy + oT, -win.offsetHeight + 90), d.h - 40);
+      win.style.left = L + 'px'; win.style.top = T + 'px';
     }
-    function up(){ document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); }
+    function up(){ document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); syncHeight(); }
     document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
   });
   rs.addEventListener('mousedown', function(e){
     e.preventDefault(); e.stopPropagation();
     var sx = e.clientX, sy = e.clientY, ow = win.offsetWidth, oh = win.offsetHeight;
     function mv2(ev){
-      win.style.width = Math.min(Math.max(300, ow + ev.clientX - sx), window.innerWidth - 24) + 'px';
-      win.style.height = Math.min(Math.max(200, oh + ev.clientY - sy), window.innerHeight - 24) + 'px';
+      /* 无宽/高上限：最小 300×200，可自由拉大（整窗不被裁剪遮挡，内容随宽换行） */
+      win.style.width = Math.max(300, ow + ev.clientX - sx) + 'px';
+      win.style.height = Math.max(200, oh + ev.clientY - sy) + 'px';
     }
-    function up2(){ document.removeEventListener('mousemove', mv2); document.removeEventListener('mouseup', up2); }
+    function up2(){ document.removeEventListener('mousemove', mv2); document.removeEventListener('mouseup', up2); syncHeight(); }
     document.addEventListener('mousemove', mv2); document.addEventListener('mouseup', up2);
   });
 })();
@@ -962,18 +965,18 @@ window.addEventListener('resize', postHeight);
   function refresh(){ area.classList.toggle('card-highlight', open || hovered); }
   dot.addEventListener('mouseenter', function(){ hovered = true; refresh(); });
   dot.addEventListener('mouseleave', function(){ hovered = false; refresh(); });
+  function docExt(){ var de=document.documentElement,b=document.body; return { w:Math.max(de.scrollWidth,b.scrollWidth?b.scrollWidth:0), h:Math.max(de.scrollHeight,b.scrollHeight?b.scrollHeight:0) }; }
+  function syncHeight(){ if(window.postHeight) window.postHeight(); }
+  /* 整页自由定位：不钳到视口，不因 iframe/页底被裁剪遮挡 */
   function position(){
     var a = area.getBoundingClientRect();
-    var w = win.offsetWidth || 470, h = win.offsetHeight || 240;
-    var sy = window.pageYOffset || 0, sx = window.pageXOffset || 0;
-    var vw = document.documentElement.clientWidth || window.innerWidth;
-    var L = Math.min(a.right + sx + 8, vw - w - 12); L = Math.max(8, L);
-    var T = Math.max(8, a.top + sy + 40);
-    win.style.left = L + 'px'; win.style.top = T + 'px';
+    var sx = window.pageXOffset || 0, sy = window.pageYOffset || 0;
+    win.style.left = Math.max(8, a.right + sx + 8) + 'px';
+    win.style.top = Math.max(8, a.top + sy + 40) + 'px';
   }
   function toggle(){
     if(open){ win.style.display = 'none'; open = false; }
-    else { win.style.display = 'flex'; position(); open = true; if(window.postHeight) window.postHeight(); }
+    else { win.style.display = 'flex'; position(); open = true; syncHeight(); }
     refresh();
   }
   dot.addEventListener('click', toggle);
@@ -982,20 +985,23 @@ window.addEventListener('resize', postHeight);
     if(e.target.closest('.pinwin-close')) return;
     var sx = e.clientX, sy = e.clientY, oL = win.offsetLeft, oT = win.offsetTop;
     function mv(ev){
-      win.style.left = Math.min(Math.max(ev.clientX - sx + oL, -win.offsetWidth + 90), window.innerWidth - 40) + 'px';
-      win.style.top = Math.min(Math.max(ev.clientY - sy + oT, 0), window.innerHeight - 40) + 'px';
+      var d = docExt();
+      var L = Math.min(Math.max(ev.clientX - sx + oL, -win.offsetWidth + 90), d.w - 40);
+      var T = Math.min(Math.max(ev.clientY - sy + oT, -win.offsetHeight + 90), d.h - 40);
+      win.style.left = L + 'px'; win.style.top = T + 'px';
     }
-    function up(){ document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); }
+    function up(){ document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); syncHeight(); }
     document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
   });
   rs.addEventListener('mousedown', function(e){
     e.preventDefault(); e.stopPropagation();
     var sx = e.clientX, sy = e.clientY, ow = win.offsetWidth, oh = win.offsetHeight;
     function mv2(ev){
-      win.style.width = Math.min(Math.max(300, ow + ev.clientX - sx), window.innerWidth - 24) + 'px';
-      win.style.height = Math.min(Math.max(200, oh + ev.clientY - sy), window.innerHeight - 24) + 'px';
+      /* 无宽/高上限：最小 300×200，可自由拉大（整窗不被裁剪遮挡，内容随宽换行） */
+      win.style.width = Math.max(300, ow + ev.clientX - sx) + 'px';
+      win.style.height = Math.max(200, oh + ev.clientY - sy) + 'px';
     }
-    function up2(){ document.removeEventListener('mousemove', mv2); document.removeEventListener('mouseup', up2); }
+    function up2(){ document.removeEventListener('mousemove', mv2); document.removeEventListener('mouseup', up2); syncHeight(); }
     document.addEventListener('mousemove', mv2); document.addEventListener('mouseup', up2);
   });
 })();
