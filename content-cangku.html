@@ -1107,8 +1107,10 @@ document.addEventListener('DOMContentLoaded', () => {
   function position(){
     var p = panel.getBoundingClientRect();
     var w = win.offsetWidth || 470, h = win.offsetHeight || 240;
-    var L = Math.min(p.right + 8, window.innerWidth - w - 12); L = Math.max(8, L);
-    var T = Math.min(p.top + 4, window.innerHeight - h - 12); T = Math.max(8, T);
+    var sx = window.pageXOffset || 0, sy = window.pageYOffset || 0;
+    var vw = document.documentElement.clientWidth || window.innerWidth;
+    var L = Math.min(p.right + sx + 8, vw - w - 12); L = Math.max(8, L);
+    var T = Math.max(8, p.top + sy + 4);
     win.style.left = L + 'px'; win.style.top = T + 'px';
   }
   function toggle(){
@@ -1209,8 +1211,10 @@ document.addEventListener('DOMContentLoaded', () => {
   function position(){
     var a = area.getBoundingClientRect();
     var w = win.offsetWidth || 470, h = win.offsetHeight || 260;
-    var L = Math.min(a.right + 8, window.innerWidth - w - 12); L = Math.max(8, L);
-    var T = Math.min(a.top + 40, window.innerHeight - h - 12); T = Math.max(8, T);
+    var sx = window.pageXOffset || 0, sy = window.pageYOffset || 0;
+    var vw = document.documentElement.clientWidth || window.innerWidth;
+    var L = Math.min(a.right + sx + 8, vw - w - 12); L = Math.max(8, L);
+    var T = Math.max(8, a.top + sy + 40);
     win.style.left = L + 'px'; win.style.top = T + 'px';
   }
   function toggle(){
