@@ -463,15 +463,25 @@ function findTreeNode(id, items){
 
 function escTxt(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-/* 渲染字段卡：点击项若有下级 → 每个下级各一张字段卡（展示全部）；叶子 → 自身一张字段卡 */
+/* 渲染字段卡：点击项有下级 → 每个下级一张字段卡（展示全部）；叶子（如三级品类）→ 保留标题与卡片，卡片内删除字段/数据并显示“暂无数据” */
 function renderCards(id){
   var stack = document.getElementById('cardStack');
   if(!stack) return;
   stack.innerHTML = '';
   var node = id ? findTreeNode(id) : null;
   if(!node) return;
-  var list = (node.children && node.children.length) ? node.children : [node];
-  list.forEach(function(it){
+  var kids = (node.children && node.children.length) ? node.children : null;
+  if(!kids){
+    var ecard = document.createElement('div');
+    ecard.className = 'detail-card';
+    var hint = document.createElement('div');
+    hint.className = 'empty-hint';
+    hint.textContent = '暂无数据';
+    ecard.appendChild(hint);
+    stack.appendChild(ecard);
+    return;
+  }
+  kids.forEach(function(it){
     var d = detailData[it.id] || {};
     var card = document.createElement('div');
     card.className = 'detail-card';
