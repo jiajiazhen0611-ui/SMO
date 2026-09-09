@@ -467,13 +467,29 @@ function toggleNode(id){
   }
 }
 
+function findTreeNode(id, items){
+  items = items || categoryData;
+  for(var i = 0; i < items.length; i++){
+    if(items[i].id === id) return items[i];
+    if(items[i].children){
+      var r = findTreeNode(id, items[i].children);
+      if(r) return r;
+    }
+  }
+  return null;
+}
+
 function selectNode(id){
   // 高亮当前行
   document.querySelectorAll('.tree-row.active').forEach(function(r){ r.classList.remove('active'); });
   var row = document.querySelector('.tree-row[data-id="'+id+'"]');
   if(row) row.classList.add('active');
   currentId = id;
-  fillDetail(id);
+  // 点击一级品类 → 卡片展示其下二级品类的字段数据（取其第一个二级；无二级则显示自身）
+  var node = findTreeNode(id);
+  var tgt = id;
+  if(node && node.children && node.children.length) tgt = node.children[0].id;
+  fillDetail(tgt);
 }
 
 function fillDetail(id){
