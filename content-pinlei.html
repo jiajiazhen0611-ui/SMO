@@ -251,7 +251,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang SC
   <div class="filter-bar">
     <div class="filter-row">
       <div class="input-wrap" style="width:220px">
-        <input class="f-input" placeholder="请输入中文名称/英文名称" />
+        <input class="f-input" placeholder="请输入中文名称" />
         <button class="input-clear" aria-label="清除" onclick="this.previousElementSibling.value='';this.style.opacity='0'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
         <span class="input-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span>
       </div>
@@ -776,6 +776,108 @@ function postHeight(){
 window.addEventListener('load', postHeight);
 window.addEventListener('resize', postHeight);
 
+</script>
+<style>
+/* ===== 搜索区 PRD（紫）：Pin 悬停/开窗时搜索区外围高亮；浮窗可拖动/缩放/关闭 ===== */
+#appContainer{position:relative}
+#apin-search{position:absolute;z-index:120;width:40px;height:40px;border-radius:50%;background:#ede9fe;color:#7c3aed;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;letter-spacing:.5px;cursor:pointer;box-shadow:0 2px 10px rgba(139,92,246,.4);border:2px solid #a78bfa;user-select:none;transition:transform .15s,background .15s;line-height:1}
+#apin-search:hover{transform:scale(1.12);background:#ddd6fe}
+.filter-bar.apin-highlight{box-shadow:0 0 0 2px #a78bfa,0 0 22px rgba(139,92,246,.5)!important}
+.pinwin{position:fixed;z-index:400;width:470px;min-width:300px;min-height:180px;background:#fff;border:1px solid #e5e6eb;border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.16);display:flex;flex-direction:column;font-size:13px;color:#1d2129;overflow:hidden}
+.pinwin-head{display:flex;align-items:center;gap:8px;padding:9px 10px 9px 14px;background:#8b5cf6;color:#fff;cursor:move;user-select:none;flex-shrink:0}
+.pinwin-title{font-weight:600;font-size:13.5px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pinwin-close{width:22px;height:22px;border:none;background:rgba(255,255,255,.18);color:#fff;border-radius:6px;cursor:pointer;font-size:14px;line-height:1;display:grid;place-items:center;flex-shrink:0}
+.pinwin-close:hover{background:rgba(255,255,255,.32)}
+.pinwin-body{overflow:auto;padding:8px 14px 14px;flex:1}
+.psec{margin-bottom:12px}
+.psec-title{font-weight:600;font-size:13px;color:#1d2129;margin:6px 0 8px;display:flex;align-items:center}
+.psec-title .n{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#8b5cf6;color:#fff;font-size:11px;font-weight:700;margin-right:6px;flex-shrink:0}
+.prow{display:grid;gap:10px;align-items:center;padding:5px 8px;border-radius:6px}
+.prow3{grid-template-columns:minmax(120px,1.1fr) minmax(104px,.9fr) 2fr}
+.prow2{grid-template-columns:minmax(120px,1fr) 2.2fr}
+.prow.head{background:#fafbfc;color:#86909c;font-size:12px;font-weight:500}
+.prow>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prow:not(.head):hover{background:#f7f9fc}
+.pinwin-rs{position:absolute;right:0;bottom:0;width:16px;height:16px;cursor:nwse-resize;background:linear-gradient(135deg,transparent 55%,rgba(139,92,246,.6) 55%)}
+</style>
+<script>
+/* ===== 搜索区单 Pin + 浮窗（内容：搜索条件 / 操作按钮）===== */
+(function(){
+  var cfg = {
+    title: '搜索区说明',
+    conditions: [
+      ['中文名称', '文本输入', '按品类中文名称检索'],
+      ['品类等级', '下拉（单选）', '一级品类 / 二级品类 / 三级品类'],
+      ['状态', '下拉（单选）', '启用 / 禁止等状态过滤'],
+      ['创建时间', '类型下拉 + 日期范围', '选择创建日期区间（含时分秒）']
+    ],
+    buttons: [
+      ['重置', '清空全部搜索条件，下拉与日期复位']
+    ]
+  };
+  var app = document.getElementById('appContainer');
+  var panel = document.querySelector('.filter-bar');
+  if(!app || !panel) return;
+  var dot = document.createElement('div');
+  dot.id = 'apin-search'; dot.title = cfg.title; dot.textContent = 'PRD';
+  app.appendChild(dot);
+  function posDot(){
+    var c = app.getBoundingClientRect(), p = panel.getBoundingClientRect();
+    dot.style.left = Math.round(p.right - c.left + 6) + 'px';
+    dot.style.top = Math.round(p.top - c.top + p.height / 2 - 20) + 'px';
+  }
+  posDot(); window.addEventListener('resize', posDot);
+  var win = document.createElement('div'); win.className = 'pinwin'; win.style.display = 'none';
+  var rows = '';
+  rows += '<div class="psec"><div class="psec-title"><span class="n">1</span>搜索条件</div>';
+  rows += '<div class="prow prow3 head"><span>条件</span><span>类型</span><span>说明</span></div>';
+  cfg.conditions.forEach(function(r){ rows += '<div class="prow prow3"><span>' + r[0] + '</span><span>' + r[1] + '</span><span>' + r[2] + '</span></div>'; });
+  rows += '</div><div class="psec"><div class="psec-title"><span class="n">2</span>操作按钮</div>';
+  rows += '<div class="prow prow2 head"><span>按钮</span><span>说明</span></div>';
+  cfg.buttons.forEach(function(r){ rows += '<div class="prow prow2"><span>' + r[0] + '</span><span>' + r[1] + '</span></div>'; });
+  rows += '</div>';
+  win.innerHTML = '<div class="pinwin-head"><span class="pinwin-title">' + cfg.title + '</span><button class="pinwin-close" title="关闭">×</button></div><div class="pinwin-body">' + rows + '</div><div class="pinwin-rs" title="拖拽右下角缩放"></div>';
+  document.body.appendChild(win);
+  var head = win.querySelector('.pinwin-head'), close = win.querySelector('.pinwin-close'), rs = win.querySelector('.pinwin-rs');
+  var open = false, hovered = false;
+  function refresh(){ panel.classList.toggle('apin-highlight', open || hovered); }
+  dot.addEventListener('mouseenter', function(){ hovered = true; refresh(); });
+  dot.addEventListener('mouseleave', function(){ hovered = false; refresh(); });
+  function position(){
+    var p = panel.getBoundingClientRect();
+    var w = win.offsetWidth || 470, h = win.offsetHeight || 240;
+    var L = Math.min(p.right + 8, window.innerWidth - w - 12); L = Math.max(8, L);
+    var T = Math.min(p.top + 4, window.innerHeight - h - 12); T = Math.max(8, T);
+    win.style.left = L + 'px'; win.style.top = T + 'px';
+  }
+  function toggle(){
+    if(open){ win.style.display = 'none'; open = false; }
+    else { win.style.display = 'flex'; position(); open = true; }
+    refresh();
+  }
+  dot.addEventListener('click', toggle);
+  close.addEventListener('click', toggle);
+  head.addEventListener('mousedown', function(e){
+    if(e.target.closest('.pinwin-close')) return;
+    var sx = e.clientX, sy = e.clientY, oL = win.offsetLeft, oT = win.offsetTop;
+    function mv(ev){
+      win.style.left = Math.min(Math.max(ev.clientX - sx + oL, -win.offsetWidth + 90), window.innerWidth - 40) + 'px';
+      win.style.top = Math.min(Math.max(ev.clientY - sy + oT, 0), window.innerHeight - 40) + 'px';
+    }
+    function up(){ document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); }
+    document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
+  });
+  rs.addEventListener('mousedown', function(e){
+    e.preventDefault(); e.stopPropagation();
+    var sx = e.clientX, sy = e.clientY, ow = win.offsetWidth, oh = win.offsetHeight;
+    function mv2(ev){
+      win.style.width = Math.min(Math.max(300, ow + ev.clientX - sx), window.innerWidth - 24) + 'px';
+      win.style.height = Math.min(Math.max(200, oh + ev.clientY - sy), window.innerHeight - 24) + 'px';
+    }
+    function up2(){ document.removeEventListener('mousemove', mv2); document.removeEventListener('mouseup', up2); }
+    document.addEventListener('mousemove', mv2); document.addEventListener('mouseup', up2);
+  });
+})();
 </script>
 </body>
 </html>
