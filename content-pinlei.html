@@ -390,7 +390,7 @@ var categoryData = [
 /* 模拟详情数据（点击树节点时填充） */
 var detailData = {
   'm1': {cn:'摩托车&摩托车配件',en:'Motorcycle & Parts',level:'一级品类',parent:'—',creator:'系统管理员',date:'2025-01-15'},
-  'm1-1':{cn:'摩托车配件',en:'Motorcycle Parts',level:'二级品类',parent:'摩托车&摩托车配件',creator:'张三',date:'2025-02-03'},
+  'm1-1':{cn:'摩托车配件',en:'Motorcycle Parts',level:'二级品类',parent:'摩托车&摩托车配件',creator:'张三',date:'2025-02-03',status:'启用'},
   /* 摩托车配件下的四个三级品类：右上角状态示例（启用=浅绿 / 禁止=淡红） */
   'm1-1-1':{cn:'通用支架',en:'Universal Bracket',level:'三级品类',parent:'摩托车配件',creator:'张三',date:'2025-03-02',status:'启用'},
   'm1-1-2':{cn:'支架垫板',en:'Bracket Pad',level:'三级品类',parent:'摩托车配件',creator:'张三',date:'2025-03-02',status:'启用'},
@@ -938,9 +938,8 @@ window.addEventListener('resize', postHeight);
           return h;
         },
         statuses: [
-          ['启用（浅绿角标）', '品类可用、可挂接商品；示例：通用支架、支架垫板'],
-          ['禁止（淡红角标）', '品类停用，不再挂接新商品；示例：赛车计时器/计圈器、摩托车后视镜'],
-          ['无角标', '数据未携带状态（示例中一级/二级品类卡）或叶子「暂无数据」卡，均不显示角标']
+          ['启用（浅绿角标）', '品类可用、可挂接商品；示例：通用支架、支架垫板、摩托车配件'],
+          ['禁止（淡红角标）', '品类停用，不再挂接新商品；示例：赛车计时器/计圈器、摩托车后视镜']
         ]
       }
     ]
