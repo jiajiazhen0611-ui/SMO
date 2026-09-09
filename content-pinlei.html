@@ -332,14 +332,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang SC
     </div>
   </div>
 
-  <!-- 三列标题行：置于卡片外（不入卡，参照仓库商品页结构），与卡片内字段列左右对齐 -->
-  <div class="detail-card-head">
-    <div class="card-head-cell">品类名称</div>
-    <div class="card-head-cell">品类结构</div>
-    <div class="card-head-cell">创建信息</div>
+  <!-- 卡片区（PRD 绿色 Pin 区域）：外置列标题条 + 字段卡堆 -->
+  <div class="card-zone">
+    <!-- 三列标题行：置于卡片外（不入卡，参照仓库商品页结构），与卡片内字段列左右对齐 -->
+    <div class="detail-card-head">
+      <div class="card-head-cell">品类名称</div>
+      <div class="card-head-cell">品类结构</div>
+      <div class="card-head-cell">创建信息</div>
+    </div>
+    <!-- 字段卡片区：点父级显示其全部直接下级，每个下级一张字段卡片（含右上角状态角标） -->
+    <div class="card-stack" id="cardStack"></div>
   </div>
-  <!-- 字段卡片区：点父级显示其全部直接下级，每个下级一张字段卡片（含右上角状态角标） -->
-  <div class="card-stack" id="cardStack"></div>
 
 </div><!-- /right-panel -->
 
@@ -799,6 +802,13 @@ window.addEventListener('resize', postHeight);
 .prow>span{min-width:0;white-space:normal;word-break:break-word;line-height:1.5}
 .prow:not(.head):hover{background:#f7f9fc}
 .pinwin-rs{position:absolute;right:0;bottom:0;width:16px;height:16px;cursor:nwse-resize;background:linear-gradient(135deg,transparent 55%,rgba(139,92,246,.6) 55%)}
+/* ===== 卡片区 Pin（浅绿 PRD）：悬停/开窗时卡片区外围同色高亮（与搜索紫 Pin 同款交互） ===== */
+#apin-card{position:absolute;z-index:121;width:40px;height:40px;border-radius:50%;background:#e9f9ee;color:#237804;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;letter-spacing:.5px;cursor:pointer;box-shadow:0 2px 10px rgba(82,196,26,.4);border:2px solid #52c41a;user-select:none;transition:transform .15s,background .15s;line-height:1}
+#apin-card:hover{transform:scale(1.12);background:#d9f4e3}
+.card-zone.card-highlight{box-shadow:0 0 0 2px #52c41a,0 0 22px rgba(82,196,26,.5)!important}
+.pinwin.theme-green .pinwin-head{background:#52c41a}
+.pinwin.theme-green .psec-title .n{background:#52c41a}
+.pinwin.theme-green .pinwin-rs{background:linear-gradient(135deg,transparent 55%,rgba(82,196,26,.6) 55%)}
 </style>
 <script>
 /* ===== 搜索区单 Pin + 浮窗（内容：搜索条件 / 操作按钮）===== */
@@ -852,6 +862,96 @@ window.addEventListener('resize', postHeight);
     var vw = document.documentElement.clientWidth || window.innerWidth;
     var L = Math.min(p.right + sx + 8, vw - w - 12); L = Math.max(8, L);
     var T = Math.max(8, p.top + sy + 4);
+    win.style.left = L + 'px'; win.style.top = T + 'px';
+  }
+  function toggle(){
+    if(open){ win.style.display = 'none'; open = false; }
+    else { win.style.display = 'flex'; position(); open = true; if(window.postHeight) window.postHeight(); }
+    refresh();
+  }
+  dot.addEventListener('click', toggle);
+  close.addEventListener('click', toggle);
+  head.addEventListener('mousedown', function(e){
+    if(e.target.closest('.pinwin-close')) return;
+    var sx = e.clientX, sy = e.clientY, oL = win.offsetLeft, oT = win.offsetTop;
+    function mv(ev){
+      win.style.left = Math.min(Math.max(ev.clientX - sx + oL, -win.offsetWidth + 90), window.innerWidth - 40) + 'px';
+      win.style.top = Math.min(Math.max(ev.clientY - sy + oT, 0), window.innerHeight - 40) + 'px';
+    }
+    function up(){ document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); }
+    document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
+  });
+  rs.addEventListener('mousedown', function(e){
+    e.preventDefault(); e.stopPropagation();
+    var sx = e.clientX, sy = e.clientY, ow = win.offsetWidth, oh = win.offsetHeight;
+    function mv2(ev){
+      win.style.width = Math.min(Math.max(300, ow + ev.clientX - sx), window.innerWidth - 24) + 'px';
+      win.style.height = Math.min(Math.max(200, oh + ev.clientY - sy), window.innerHeight - 24) + 'px';
+    }
+    function up2(){ document.removeEventListener('mousemove', mv2); document.removeEventListener('mouseup', up2); }
+    document.addEventListener('mousemove', mv2); document.addEventListener('mouseup', up2);
+  });
+})();
+</script>
+<script>
+/* ===== 卡片区单 Pin + 浮窗（内容：标题 / 操作按钮 / 状态说明；绿色主题） ===== */
+(function(){
+  var cfg = {
+    title: '卡片区说明',
+    titles: [
+      ['三列标题条（品类名称 / 品类结构 / 创建信息）', '卡片区顶部外置列标题条（表头风格，不入卡）；三列与每张卡的字段列一一对齐'],
+      ['品类字段卡堆（点选品类 → 每直接下级一张）', '展示当前选中品类的全部直接下级：每下级一张白卡（右上角状态角标 + 三列字段）；无下级时该卡显示「暂无数据」']
+    ],
+    buttons: [
+      ['（左树）点选一级/二级品类', '启用', '卡片区内容刷新入口：显示其全部直接下级的字段卡'],
+      ['（左树）点选三级叶子品类', '启用', '无下级可展示 → 卡片区保留一张卡并提示「暂无数据」'],
+      ['卡片行内操作（新增下级/编辑/禁用）', '未提供（只读）', '当前原型字段卡为只读信息卡，无行内按钮；状态仅通过右上角角标静态标注']
+    ],
+    statuses: [
+      ['启用（浅绿角标）', '品类可用、可挂接商品；示例：通用支架、支架垫板'],
+      ['禁止（淡红角标）', '品类停用，不再挂接新商品；示例：赛车计时器/计圈器、摩托车后视镜'],
+      ['无角标', '数据未携带状态（示例中一级/二级品类卡）或叶子「暂无数据」卡，均不显示角标']
+    ]
+  };
+  var app = document.getElementById('appContainer');
+  var area = document.querySelector('.card-zone');
+  if(!app || !area) return;
+  var dot = document.createElement('div');
+  dot.id = 'apin-card'; dot.title = cfg.title; dot.textContent = 'PRD';
+  app.appendChild(dot);
+  var topEl = area.querySelector('.detail-card-head') || area;   /* Pin 贴标题条右侧缘垂直居中 */
+  function posDot(){
+    var c = app.getBoundingClientRect(), t = topEl.getBoundingClientRect();
+    dot.style.left = Math.round(t.right - c.left + 6) + 'px';
+    dot.style.top = Math.round(t.top - c.top + t.height / 2 - 20) + 'px';
+  }
+  posDot(); window.addEventListener('resize', posDot);
+  var win = document.createElement('div'); win.className = 'pinwin theme-green'; win.style.display = 'none';
+  var rows = '';
+  rows += '<div class="psec"><div class="psec-title"><span class="n">1</span>标题</div>';
+  rows += '<div class="prow prow2 head"><span>标题</span><span>说明</span></div>';
+  cfg.titles.forEach(function(r){ rows += '<div class="prow prow2"><span>' + r[0] + '</span><span>' + r[1] + '</span></div>'; });
+  rows += '</div><div class="psec"><div class="psec-title"><span class="n">2</span>操作按钮</div>';
+  rows += '<div class="prow prow3 head"><span>按钮</span><span>状态</span><span>说明</span></div>';
+  cfg.buttons.forEach(function(r){ rows += '<div class="prow prow3"><span>' + r[0] + '</span><span>' + r[1] + '</span><span>' + r[2] + '</span></div>'; });
+  rows += '</div><div class="psec"><div class="psec-title"><span class="n">3</span>状态说明</div>';
+  rows += '<div class="prow prow2 head"><span>状态名</span><span>说明</span></div>';
+  cfg.statuses.forEach(function(r){ rows += '<div class="prow prow2"><span>' + r[0] + '</span><span>' + r[1] + '</span></div>'; });
+  rows += '</div>';
+  win.innerHTML = '<div class="pinwin-head"><span class="pinwin-title">' + cfg.title + '</span><button class="pinwin-close" title="关闭">×</button></div><div class="pinwin-body">' + rows + '</div><div class="pinwin-rs" title="拖拽右下角缩放"></div>';
+  document.body.appendChild(win);
+  var head = win.querySelector('.pinwin-head'), close = win.querySelector('.pinwin-close'), rs = win.querySelector('.pinwin-rs');
+  var open = false, hovered = false;
+  function refresh(){ area.classList.toggle('card-highlight', open || hovered); }
+  dot.addEventListener('mouseenter', function(){ hovered = true; refresh(); });
+  dot.addEventListener('mouseleave', function(){ hovered = false; refresh(); });
+  function position(){
+    var a = area.getBoundingClientRect();
+    var w = win.offsetWidth || 470, h = win.offsetHeight || 240;
+    var sy = window.pageYOffset || 0, sx = window.pageXOffset || 0;
+    var vw = document.documentElement.clientWidth || window.innerWidth;
+    var L = Math.min(a.right + sx + 8, vw - w - 12); L = Math.max(8, L);
+    var T = Math.max(8, a.top + sy + 40);
     win.style.left = L + 'px'; win.style.top = T + 'px';
   }
   function toggle(){
