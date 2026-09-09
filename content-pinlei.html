@@ -189,9 +189,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang SC
 .detail-card .row-status{position:absolute;top:-1px;right:-1px;z-index:1;font-size:12px;line-height:1.6;padding:2px 10px;border-left:1px solid transparent;border-bottom:1px solid transparent;border-bottom-left-radius:var(--radius-sm);white-space:nowrap}
 .detail-card .row-status.status-on{color:#52c41a;background:rgba(82,196,26,.07);border-left-color:rgba(82,196,26,.32);border-bottom-color:rgba(82,196,26,.32)}
 .detail-card .row-status.status-off{color:#ff4d4f;background:rgba(255,77,79,.07);border-left-color:rgba(255,77,79,.3);border-bottom-color:rgba(255,77,79,.3)}
-/* 卡片外列标题条 = 表头风格（LC-OMS §五/§五·补2）：#fafbfc 底、13/500/secondary、无边框；与下方字段列左右对齐 */
+/* 卡片外列标题条 = 表头风格（LC-OMS §五/§五·补2）：#fafbfc 底、13/500/secondary、无边框；与下方卡片对齐 */
 .detail-card-head{display:flex;gap:40px;padding:12px 24px;background:#fafbfc;border-radius:var(--radius-lg) var(--radius-lg) 0 0;margin-bottom:-16px}
 .detail-card-head .card-head-cell{font-size:13px;font-weight:500;color:var(--text-secondary);flex:1;min-width:0}
+/* 子级品类列表（点击一级看二级、点二级看三级；叶子=暂无数据） */
+.child-list{padding:2px 0 0}
+.child-row{display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px dashed var(--border);cursor:pointer;transition:background .15s}
+.child-row:last-child{border-bottom:none}
+.child-row:hover{background:var(--bg)}
+.child-row .cr-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13.5px;color:var(--text)}
+.child-row .cr-tip{color:var(--text-tertiary);font-size:12px;white-space:nowrap}
+.status-chip{flex-shrink:0;font-size:12px;line-height:1.6;padding:1px 8px;border-radius:4px;white-space:nowrap}
+.status-chip.on{color:#52c41a;background:rgba(82,196,26,.07);border:1px solid rgba(82,196,26,.32)}
+.status-chip.off{color:#ff4d4f;background:rgba(255,77,79,.07);border:1px solid rgba(255,77,79,.3)}
 /* 卡片标题条 = 表头风格：#fafbfc 背景横贯全宽，三格与下方三列对齐（同 gap/flex） */
 .card-head-row{display:flex;gap:40px;background:#fafbfc;margin:-20px -24px 16px;padding:12px 24px;border-radius:var(--radius-lg) var(--radius-lg) 0 0}
 .card-head-cell{flex:1;min-width:0;font-size:13px;font-weight:500;color:var(--text-secondary)}
@@ -330,33 +340,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang SC
     </div>
   </div>
 
-  <!-- 三列标题行：置于卡片外（不入卡，参照仓库商品页结构），与卡片内字段列左右对齐 -->
+  <!-- 子级品类信息标题行（卡片外，表头风格） -->
   <div class="detail-card-head">
-    <div class="card-head-cell">品类名称</div>
-    <div class="card-head-cell">品类结构</div>
-    <div class="card-head-cell">创建信息</div>
+    <span class="card-head-cell" id="cardHead">—</span>
   </div>
-  <!-- 详情卡片（仅字段；状态角标贴卡片右上角，不再落在标题行） -->
+  <!-- 详情卡片：展示当前品类的下级列表；叶子（无下级）显示“暂无数据” -->
   <div class="detail-card" id="detailCard">
-    <!-- 状态角标：启用（浅绿）/ 禁止（淡红）；按 LC-OMS §七 贴卡片右上角 -->
-    <span class="row-status" id="valStatus" style="display:none"></span>
-    <div class="card-cols">
-      <!-- 列一：品类名称 -->
-      <div class="card-col">
-        <div class="field"><span class="f-label">中文名称：</span><span class="f-val" id="valCnName">—</span></div>
-        <div class="field"><span class="f-label">英文名称：</span><span class="f-val" id="valEnName">—</span></div>
-      </div>
-      <!-- 列二：品类结构 -->
-      <div class="card-col">
-        <div class="field"><span class="f-label">品类等级：</span><span class="f-val" id="valLevel">—</span></div>
-        <div class="field"><span class="f-label">父级品类：</span><span class="f-val" id="valParent">—</span></div>
-      </div>
-      <!-- 列三：创建信息 -->
-      <div class="card-col">
-        <div class="field"><span class="f-label">创建人：</span><span class="f-val" id="valCreator">—</span></div>
-        <div class="field"><span class="f-label">创建日期：</span><span class="f-val" id="valDate">—</span></div>
-      </div>
-    </div>
+    <div class="child-list" id="childList"></div>
+    <div class="empty-hint" id="childEmpty" style="display:none">暂无数据</div>
   </div>
 
 </div><!-- /right-panel -->
@@ -427,11 +418,11 @@ function renderTree(items, container, level){
     var row = document.createElement('div');
     row.className = 'tree-row';
     row.dataset.id = item.id;
-    row.onclick=function(e){ e.stopPropagation(); if(level===0 && item.id!=='m1') return; selectNode(item.id); };
+    row.onclick=function(e){ e.stopPropagation(); selectNode(item.id); };
 
     // 箭头（一级品类恒显示朝右箭头作为展开语义；不为其新增二级示例，无子级时点击无副作用）
     var arrow = document.createElement('span');
-    var expandable = hasChildren || level === 0;
+    var expandable = hasChildren || level === 1;
     arrow.className = 'tree-arrow' + (expandable ? '' : ' leaf');
     if(expandable) arrow.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>';
     arrow.onclick=function(e){ e.stopPropagation(); toggleNode(item.id); };
@@ -467,35 +458,67 @@ function toggleNode(id){
   }
 }
 
+function findCat(id, items, level){
+  items = items || categoryData;
+  level = level || 1;
+  for(var i = 0; i < items.length; i++){
+    var it = items[i];
+    if(it.id === id) return { node: it, level: level };
+    if(it.children){
+      var r = findCat(id, it.children, level + 1);
+      if(r) return r;
+    }
+  }
+  return null;
+}
+function levelName(level){ return level===1?'一级品类':level===2?'二级品类':level===3?'三级品类':('L'+level); }
+
 function selectNode(id){
   // 高亮当前行
   document.querySelectorAll('.tree-row.active').forEach(function(r){ r.classList.remove('active'); });
   var row = document.querySelector('.tree-row[data-id="'+id+'"]');
   if(row) row.classList.add('active');
   currentId = id;
-  fillDetail(id);
+  renderChildCard(id);
 }
 
-function fillDetail(id){
-  var d = detailData[id] || {};
-  document.getElementById('valCnName').textContent = d.cn || '—';
-  document.getElementById('valEnName').textContent = d.en || '—';
-  document.getElementById('valLevel').textContent = d.level || '—';
-  document.getElementById('valParent').textContent = d.parent || '—';
-  document.getElementById('valCreator').textContent = d.creator || '—';
-  document.getElementById('valDate').textContent = d.date || '—';
-  // 右上角状态角标：启用(浅绿)/禁止(淡红)，无状态则隐藏
-  var stEl = document.getElementById('valStatus');
-  if(stEl){
-    if(d.status){
-      stEl.textContent = d.status;
-      stEl.className = 'row-status status-' + (d.status === '启用' ? 'on' : 'off');
-      stEl.style.display = 'inline-block';
-    } else {
-      stEl.style.display = 'none';
-      stEl.className = 'row-status';
-    }
+/* 点击一级 → 列它的二级；点二级 → 列它的三级；叶子（无下级）→ 卡片清空 + “暂无数据” */
+function renderChildCard(id){
+  var f = findCat(id);
+  var head = document.getElementById('cardHead');
+  var list = document.getElementById('childList');
+  var empty = document.getElementById('childEmpty');
+  if(list) list.innerHTML = '';
+  if(empty) empty.style.display = 'none';
+  if(!f){
+    if(head) head.textContent = id || '—';
+    if(empty) empty.style.display = 'block';
+    return;
   }
+  var kids = f.node.children || [];
+  if(head) head.textContent = f.node.name + ' · ' + (kids.length ? ('下辖 ' + kids.length + ' 个' + levelName(f.level + 1)) : (levelName(f.level) + '（无下级）'));
+  if(!kids.length){ if(empty) empty.style.display = 'block'; return; }
+  kids.forEach(function(k){
+    var rowEl = document.createElement('div');
+    rowEl.className = 'child-row';
+    rowEl.dataset.id = k.id;
+    var nm = document.createElement('span'); nm.className = 'cr-name'; nm.textContent = k.name;
+    rowEl.appendChild(nm);
+    var kc = (k.children || []).length;
+    if(kc){
+      var tip = document.createElement('span'); tip.className = 'cr-tip'; tip.textContent = kc + ' 个下级';
+      rowEl.appendChild(tip);
+    }
+    var dd = detailData[k.id];
+    if(dd && dd.status){
+      var chip = document.createElement('span');
+      chip.className = 'status-chip ' + (dd.status === '启用' ? 'on' : 'off');
+      chip.textContent = dd.status;
+      rowEl.appendChild(chip);
+    }
+    rowEl.addEventListener('click', function(){ selectNode(k.id); });
+    list.appendChild(rowEl);
+  });
 }
 
 /* ========== 树操作 ========== */
@@ -512,7 +535,7 @@ function resetTree(){
   collapseAll();
   currentId = null;
   document.querySelectorAll('.tree-row.active').forEach(function(r){ r.classList.remove('active'); });
-  fillDetail(null);
+  renderChildCard(null);
 }
 function toggleTreeMenu(){
   document.getElementById('treeDropdown').classList.toggle('show');
@@ -747,7 +770,8 @@ document.addEventListener('click', function(e){
 document.addEventListener('DOMContentLoaded', function(){
   var body = document.getElementById('treeBody');
   renderTree(categoryData, body, 1);
-  // 默认全折叠（renderTree 已不设 expanded）
+  // 默认选中“摩托车&摩托车配件”：卡片展示其下一级（二级品类）信息
+  selectNode('m1');
 });
 
 /* ========== iframe 高度上报（壳层要求）========== */
