@@ -1066,18 +1066,33 @@ document.addEventListener('DOMContentLoaded', () => {
 (function(){
   var cfg = {
     title: '搜索区说明',
-    conditions: [
-      ['SKU/自定义编码/平台编码', '文本输入', '多码合一模糊检索'],
-      ['商品名称', '文本输入', '中文 / 英文商品名模糊检索'],
-      ['仓库', '下拉框（单选）', '按海外仓代码过滤'],
-      ['商品品类', '三级树形搜索选择', '关键字搜品类后单选'],
-      ['范围（重量/货值/长/宽/高）', '维度下拉 + 范围输入', '先选维度，再输入上下限区间']
-    ],
-    buttons: [
-      ['搜索 🔍（SKU/名称输入）', '输入框支持回车查询；下拉框选择内容后页面自动筛选查询'],
-      ['范围搜索 🔍（范围框）', '按所选维度区间筛选'],
-      ['清除 ×（输入框内）', '清除当前输入（悬停输入框显示）'],
-      ['重置', '清空全部条件与选择，下拉恢复默认']
+    /* 区域 PRD 按实际取舍：搜索区含 搜索条件 + 操作按钮；secs 顺序即序号 */
+    secs: [
+      { name: '搜索条件', build: function(){
+          var h = '<div class="prow prow3 head"><span>条件</span><span>类型</span><span>说明</span></div>';
+          this.rows.forEach(function(r){ h += '<div class="prow prow3"><span>' + r[0] + '</span><span>' + r[1] + '</span><span>' + r[2] + '</span></div>'; });
+          return h;
+        },
+        rows: [
+          ['SKU/自定义编码/平台编码', '文本输入', '多码合一模糊检索（支持回车查询）；默认即搜'],
+          ['商品名称', '文本输入', '中文 / 英文商品名模糊检索'],
+          ['仓库', '下拉框（单选）', '按海外仓代码过滤；默认「请选择仓库」'],
+          ['商品品类', '三级树形搜索选择', '关键字搜品类后单选（取消/确定关闭）'],
+          ['范围（重量/货值/长/宽/高）', '维度下拉 + 范围输入', '先选维度（默认重量），再输入上下限区间']
+        ]
+      },
+      { name: '操作按钮', build: function(){
+          var h = '<div class="prow prow2 head"><span>按钮</span><span>说明</span></div>';
+          this.rows.forEach(function(r){ h += '<div class="prow prow2"><span>' + r[0] + '</span><span>' + r[1] + '</span></div>'; });
+          return h;
+        },
+        rows: [
+          ['搜索 🔍（SKU/名称输入）', '输入框支持回车查询；下拉框选择内容后自动筛选查询'],
+          ['范围搜索 🔍（范围框）', '按所选维度上下限区间筛选'],
+          ['清除 ×（输入框内）', '清除当前输入（悬停输入框显示）'],
+          ['重置', '清空全部条件与选择，下拉恢复默认']
+        ]
+      }
     ]
   };
   var app = document.getElementById('appContainer');
@@ -1094,13 +1109,11 @@ document.addEventListener('DOMContentLoaded', () => {
   posDot(); window.addEventListener('resize', posDot);
   var win = document.createElement('div'); win.className = 'pinwin'; win.style.display = 'none';
   var rows = '';
-  rows += '<div class="psec"><div class="psec-title"><span class="n">1</span>搜索条件</div>';
-  rows += '<div class="prow prow3 head"><span>条件</span><span>类型</span><span>说明</span></div>';
-  cfg.conditions.forEach(function(r){ rows += '<div class="prow prow3"><span>' + r[0] + '</span><span>' + r[1] + '</span><span>' + r[2] + '</span></div>'; });
-  rows += '</div><div class="psec"><div class="psec-title"><span class="n">2</span>操作按钮</div>';
-  rows += '<div class="prow prow2 head"><span>按钮</span><span>说明</span></div>';
-  cfg.buttons.forEach(function(r){ rows += '<div class="prow prow2"><span>' + r[0] + '</span><span>' + r[1] + '</span></div>'; });
-  rows += '</div>';
+  cfg.secs.forEach(function(s, idx){
+    rows += '<div class="psec"><div class="psec-title"><span class="n">' + (idx + 1) + '</span>' + s.name + '</div>';
+    rows += s.build();
+    rows += '</div>';
+  });
   win.innerHTML = '<div class="pinwin-head"><span class="pinwin-title">' + cfg.title + '</span><button class="pinwin-close" title="关闭">×</button></div><div class="pinwin-body">' + rows + '</div><div class="pinwin-rs" title="拖拽右下角缩放"></div>';
   document.body.appendChild(win);
   var head = win.querySelector('.pinwin-head'), close = win.querySelector('.pinwin-close'), rs = win.querySelector('.pinwin-rs');
@@ -1108,18 +1121,17 @@ document.addEventListener('DOMContentLoaded', () => {
   function refresh(){ panel.classList.toggle('apin-highlight', open || hovered); }
   dot.addEventListener('mouseenter', function(){ hovered = true; refresh(); });
   dot.addEventListener('mouseleave', function(){ hovered = false; refresh(); });
+  function docExt(){ var de=document.documentElement,b=document.body; return { w:Math.max(de.scrollWidth,b.scrollWidth?b.scrollWidth:0), h:Math.max(de.scrollHeight,b.scrollHeight?b.scrollHeight:0) }; }
+  function syncHeight(){ if(window.postHeight) window.postHeight(); }
   function position(){
     var p = panel.getBoundingClientRect();
-    var w = win.offsetWidth || 470, h = win.offsetHeight || 240;
     var sx = window.pageXOffset || 0, sy = window.pageYOffset || 0;
-    var vw = document.documentElement.clientWidth || window.innerWidth;
-    var L = Math.min(p.right + sx + 8, vw - w - 12); L = Math.max(8, L);
-    var T = Math.max(8, p.top + sy + 4);
-    win.style.left = L + 'px'; win.style.top = T + 'px';
+    win.style.left = Math.max(8, p.right + sx + 8) + 'px';
+    win.style.top = Math.max(8, p.top + sy + 4) + 'px';
   }
   function toggle(){
     if(open){ win.style.display = 'none'; open = false; }
-    else { win.style.display = 'flex'; position(); open = true; if(window.postHeight) window.postHeight(); }
+    else { win.style.display = 'flex'; position(); open = true; syncHeight(); }
     refresh();
   }
   dot.addEventListener('click', toggle);
@@ -1128,11 +1140,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if(e.target.closest('.pinwin-close')) return;
     var sx = e.clientX, sy = e.clientY, oL = win.offsetLeft, oT = win.offsetTop;
     function mv(ev){
-      var L = Math.min(Math.max(ev.clientX - sx + oL, -win.offsetWidth + 90), window.innerWidth - 40);
-      var T = Math.min(Math.max(ev.clientY - sy + oT, 0), window.innerHeight - 40);
+      var d = docExt();
+      var L = Math.min(Math.max(ev.clientX - sx + oL, -win.offsetWidth + 90), d.w - 40);
+      var T = Math.min(Math.max(ev.clientY - sy + oT, -win.offsetHeight + 90), d.h - 40);
       win.style.left = L + 'px'; win.style.top = T + 'px';
     }
-    function up(){ document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); }
+    function up(){ document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); syncHeight(); }
     document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
   }
   head.addEventListener('mousedown', drag);
@@ -1140,11 +1153,10 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault(); e.stopPropagation();
     var sx = e.clientX, sy = e.clientY, ow = win.offsetWidth, oh = win.offsetHeight;
     function mv2(ev){
-      var w = Math.max(300, ow + ev.clientX - sx), h = Math.max(200, oh + ev.clientY - sy);
-      w = Math.min(w, window.innerWidth - 24); h = Math.min(h, window.innerHeight - 24);
-      win.style.width = w + 'px'; win.style.height = h + 'px';
+      win.style.width = Math.max(300, ow + ev.clientX - sx) + 'px';
+      win.style.height = Math.max(200, oh + ev.clientY - sy) + 'px';
     }
-    function up2(){ document.removeEventListener('mousemove', mv2); document.removeEventListener('mouseup', up2); }
+    function up2(){ document.removeEventListener('mousemove', mv2); document.removeEventListener('mouseup', up2); syncHeight(); }
     document.addEventListener('mousemove', mv2); document.addEventListener('mouseup', up2);
   });
 })();
@@ -1212,18 +1224,17 @@ document.addEventListener('DOMContentLoaded', () => {
   function refresh(){ area.classList.toggle('card-highlight', open || hovered); }
   dot.addEventListener('mouseenter', function(){ hovered = true; refresh(); });
   dot.addEventListener('mouseleave', function(){ hovered = false; refresh(); });
+  function docExt(){ var de=document.documentElement,b=document.body; return { w:Math.max(de.scrollWidth,b.scrollWidth?b.scrollWidth:0), h:Math.max(de.scrollHeight,b.scrollHeight?b.scrollHeight:0) }; }
+  function syncHeight(){ if(window.postHeight) window.postHeight(); }
   function position(){
     var a = area.getBoundingClientRect();
-    var w = win.offsetWidth || 470, h = win.offsetHeight || 260;
     var sx = window.pageXOffset || 0, sy = window.pageYOffset || 0;
-    var vw = document.documentElement.clientWidth || window.innerWidth;
-    var L = Math.min(a.right + sx + 8, vw - w - 12); L = Math.max(8, L);
-    var T = Math.max(8, a.top + sy + 40);
-    win.style.left = L + 'px'; win.style.top = T + 'px';
+    win.style.left = Math.max(8, a.right + sx + 8) + 'px';
+    win.style.top = Math.max(8, a.top + sy + 40) + 'px';
   }
   function toggle(){
     if(open){ win.style.display = 'none'; open = false; }
-    else { win.style.display = 'flex'; position(); open = true; if(window.postHeight) window.postHeight(); }
+    else { win.style.display = 'flex'; position(); open = true; syncHeight(); }
     refresh();
   }
   dot.addEventListener('click', toggle);
@@ -1232,11 +1243,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if(e.target.closest('.pinwin-close')) return;
     var sx = e.clientX, sy = e.clientY, oL = win.offsetLeft, oT = win.offsetTop;
     function mv(ev){
-      var L = Math.min(Math.max(ev.clientX - sx + oL, -win.offsetWidth + 90), window.innerWidth - 40);
-      var T = Math.min(Math.max(ev.clientY - sy + oT, 0), window.innerHeight - 40);
+      var d = docExt();
+      var L = Math.min(Math.max(ev.clientX - sx + oL, -win.offsetWidth + 90), d.w - 40);
+      var T = Math.min(Math.max(ev.clientY - sy + oT, -win.offsetHeight + 90), d.h - 40);
       win.style.left = L + 'px'; win.style.top = T + 'px';
     }
-    function up(){ document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); }
+    function up(){ document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); syncHeight(); }
     document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
   }
   head.addEventListener('mousedown', drag);
@@ -1244,11 +1256,10 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault(); e.stopPropagation();
     var sx = e.clientX, sy = e.clientY, ow = win.offsetWidth, oh = win.offsetHeight;
     function mv2(ev){
-      var w = Math.max(300, ow + ev.clientX - sx), h = Math.max(220, oh + ev.clientY - sy);
-      w = Math.min(w, window.innerWidth - 24); h = Math.min(h, window.innerHeight - 24);
-      win.style.width = w + 'px'; win.style.height = h + 'px';
+      win.style.width = Math.max(300, ow + ev.clientX - sx) + 'px';
+      win.style.height = Math.max(200, oh + ev.clientY - sy) + 'px';
     }
-    function up2(){ document.removeEventListener('mousemove', mv2); document.removeEventListener('mouseup', up2); }
+    function up2(){ document.removeEventListener('mousemove', mv2); document.removeEventListener('mouseup', up2); syncHeight(); }
     document.addEventListener('mousemove', mv2); document.addEventListener('mouseup', up2);
   });
 })();
