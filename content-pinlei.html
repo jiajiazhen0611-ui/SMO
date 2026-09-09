@@ -192,6 +192,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang SC
 /* 卡片外列标题条 = 表头风格（LC-OMS §五/§五·补2）：#fafbfc 底、13/500/secondary、无边框；与下方卡片对齐 */
 .detail-card-head{display:flex;gap:40px;padding:12px 24px;background:#fafbfc;border-radius:var(--radius-lg) var(--radius-lg) 0 0;margin-bottom:-16px}
 .detail-card-head .card-head-cell{font-size:13px;font-weight:500;color:var(--text-secondary);flex:1;min-width:0}
+/* 字段卡堆叠：一个下级一张卡，卡间距 16px */
+.card-stack{display:flex;flex-direction:column;gap:16px}
 /* 卡片标题条 = 表头风格：#fafbfc 背景横贯全宽，三格与下方三列对齐（同 gap/flex） */
 .card-head-row{display:flex;gap:40px;background:#fafbfc;margin:-20px -24px 16px;padding:12px 24px;border-radius:var(--radius-lg) var(--radius-lg) 0 0}
 .card-head-cell{flex:1;min-width:0;font-size:13px;font-weight:500;color:var(--text-secondary)}
@@ -336,28 +338,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang SC
     <div class="card-head-cell">品类结构</div>
     <div class="card-head-cell">创建信息</div>
   </div>
-  <!-- 详情卡片（仅字段；状态角标贴卡片右上角，不再落在标题行） -->
-  <div class="detail-card" id="detailCard">
-    <!-- 状态角标：启用（浅绿）/ 禁止（淡红）；按 LC-OMS §七 贴卡片右上角 -->
-    <span class="row-status" id="valStatus" style="display:none"></span>
-    <div class="card-cols">
-      <!-- 列一：品类名称 -->
-      <div class="card-col">
-        <div class="field"><span class="f-label">中文名称：</span><span class="f-val" id="valCnName">—</span></div>
-        <div class="field"><span class="f-label">英文名称：</span><span class="f-val" id="valEnName">—</span></div>
-      </div>
-      <!-- 列二：品类结构 -->
-      <div class="card-col">
-        <div class="field"><span class="f-label">品类等级：</span><span class="f-val" id="valLevel">—</span></div>
-        <div class="field"><span class="f-label">父级品类：</span><span class="f-val" id="valParent">—</span></div>
-      </div>
-      <!-- 列三：创建信息 -->
-      <div class="card-col">
-        <div class="field"><span class="f-label">创建人：</span><span class="f-val" id="valCreator">—</span></div>
-        <div class="field"><span class="f-label">创建日期：</span><span class="f-val" id="valDate">—</span></div>
-      </div>
-    </div>
-  </div>
+  <!-- 字段卡片区：点父级显示其全部直接下级，每个下级一张字段卡片（含右上角状态角标） -->
+  <div class="card-stack" id="cardStack"></div>
 
 </div><!-- /right-panel -->
 
@@ -479,39 +461,47 @@ function findTreeNode(id, items){
   return null;
 }
 
+function escTxt(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* 渲染字段卡：点击项若有下级 → 每个下级各一张字段卡（展示全部）；叶子 → 自身一张字段卡 */
+function renderCards(id){
+  var stack = document.getElementById('cardStack');
+  if(!stack) return;
+  stack.innerHTML = '';
+  var node = id ? findTreeNode(id) : null;
+  if(!node) return;
+  var list = (node.children && node.children.length) ? node.children : [node];
+  list.forEach(function(it){
+    var d = detailData[it.id] || {};
+    var card = document.createElement('div');
+    card.className = 'detail-card';
+    if(d.status){
+      var st = document.createElement('span');
+      st.className = 'row-status status-' + (d.status === '启用' ? 'on' : 'off');
+      st.textContent = d.status;
+      card.appendChild(st);
+    }
+    var cols = document.createElement('div');
+    cols.className = 'card-cols';
+    function row(label, val){
+      return '<div class="field"><span class="f-label">' + label + '</span><span class="f-val">' + escTxt(val) + '</span></div>';
+    }
+    cols.innerHTML =
+      '<div class="card-col">' + row('中文名称：', d.cn || '—') + row('英文名称：', d.en || '—') + '</div>' +
+      '<div class="card-col">' + row('品类等级：', d.level || '—') + row('父级品类：', d.parent || '—') + '</div>' +
+      '<div class="card-col">' + row('创建人：', d.creator || '—') + row('创建日期：', d.date || '—') + '</div>';
+    card.appendChild(cols);
+    stack.appendChild(card);
+  });
+}
+
 function selectNode(id){
   // 高亮当前行
   document.querySelectorAll('.tree-row.active').forEach(function(r){ r.classList.remove('active'); });
   var row = document.querySelector('.tree-row[data-id="'+id+'"]');
   if(row) row.classList.add('active');
   currentId = id;
-  // 点击一级品类 → 卡片展示其下二级品类的字段数据（取其第一个二级；无二级则显示自身）
-  var node = findTreeNode(id);
-  var tgt = id;
-  if(node && node.children && node.children.length) tgt = node.children[0].id;
-  fillDetail(tgt);
-}
-
-function fillDetail(id){
-  var d = detailData[id] || {};
-  document.getElementById('valCnName').textContent = d.cn || '—';
-  document.getElementById('valEnName').textContent = d.en || '—';
-  document.getElementById('valLevel').textContent = d.level || '—';
-  document.getElementById('valParent').textContent = d.parent || '—';
-  document.getElementById('valCreator').textContent = d.creator || '—';
-  document.getElementById('valDate').textContent = d.date || '—';
-  // 右上角状态角标：启用(浅绿)/禁止(淡红)，无状态则隐藏
-  var stEl = document.getElementById('valStatus');
-  if(stEl){
-    if(d.status){
-      stEl.textContent = d.status;
-      stEl.className = 'row-status status-' + (d.status === '启用' ? 'on' : 'off');
-      stEl.style.display = 'inline-block';
-    } else {
-      stEl.style.display = 'none';
-      stEl.className = 'row-status';
-    }
-  }
+  renderCards(id);
 }
 
 /* ========== 树操作 ========== */
@@ -528,7 +518,7 @@ function resetTree(){
   collapseAll();
   currentId = null;
   document.querySelectorAll('.tree-row.active').forEach(function(r){ r.classList.remove('active'); });
-  fillDetail(null);
+  renderCards(null);
 }
 function toggleTreeMenu(){
   document.getElementById('treeDropdown').classList.toggle('show');
