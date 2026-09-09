@@ -190,7 +190,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang SC
 .detail-card .row-status.status-on{color:#52c41a;background:rgba(82,196,26,.07);border-left-color:rgba(82,196,26,.32);border-bottom-color:rgba(82,196,26,.32)}
 .detail-card .row-status.status-off{color:#ff4d4f;background:rgba(255,77,79,.07);border-left-color:rgba(255,77,79,.3);border-bottom-color:rgba(255,77,79,.3)}
 /* 卡片外列标题条 = 表头风格（LC-OMS §五/§五·补2）：#fafbfc 底、13/500/secondary、无边框；与下方卡片对齐 */
-.detail-card-head{display:flex;gap:40px;padding:12px 24px;background:#fafbfc;border-radius:var(--radius-lg) var(--radius-lg) 0 0;margin-bottom:-16px}
+/* 外置列标题条（表头风格）：带位于卡片上方，不重叠（LC-OMS 五·补2，负 margin 曾致首卡叠入标题条） */
+.detail-card-head{display:flex;gap:40px;padding:12px 24px;background:#fafbfc;border-radius:var(--radius-lg) var(--radius-lg) 0 0;margin-bottom:0}
 .detail-card-head .card-head-cell{font-size:13px;font-weight:500;color:var(--text-secondary);flex:1;min-width:0}
 /* 字段卡堆叠：一个下级一张卡，卡间距 16px */
 .card-stack{display:flex;flex-direction:column;gap:16px}

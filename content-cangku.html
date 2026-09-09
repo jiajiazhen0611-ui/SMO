@@ -700,8 +700,12 @@ const TABLE_DATA = [
   { warehouseCode:'USNJ07', cnName:'不锈钢保温杯', enName:'Stainless Steel Thermos', cnDeclare:'不锈钢保温容器', enDeclare:'Stainless Steel Bottle', productCode:'PROD-004', customCode:'CUSTOM-004', platformCode:'WISH-GL', sku:'SKU004', category:'家居用品', value:'18 USD', specForecast:'8 × 8 × 24 / 0.33 公制', specActual:'8 × 8 × 25 / 0.35 公制', specAverage:'8 × 8 × 25 / 0.34 公制' },
   { warehouseCode:'USGA12', cnName:'折叠雨伞', enName:'Compact Folding Umbrella', cnDeclare:'折叠伞', enDeclare:'Folding Umbrella', productCode:'PROD-005', customCode:'CUSTOM-005', platformCode:'AMZ-CA', sku:'SKU005', category:'户外用品', value:'12 USD', specForecast:'5 × 5 × 28 / 0.38 公制', specActual:'5 × 5 × 29 / 0.39 公制', specAverage:'5 × 5 × 29 / 0.39 公制' },
   { warehouseCode:'USTX03', cnName:'帆布双肩包', enName:'Canvas Backpack', cnDeclare:'帆布包', enDeclare:'Canvas Bag', productCode:'PROD-006', customCode:'CUSTOM-006', platformCode:'EBAY-UK', sku:'SKU006', category:'箱包', value:'35 USD', specForecast:'29 × 14 × 44 / 0.85 公制', specActual:'30 × 15 × 45 / 0.88 公制', specAverage:'30 × 15 × 45 / 0.87 公制' },
+  { warehouseCode:'USLAX09', cnName:'陶瓷马克杯', enName:'Ceramic Mug', cnDeclare:'陶瓷杯', enDeclare:'Ceramic Cup', productCode:'PROD-007', customCode:'CUSTOM-007', platformCode:'AMZ-US', sku:'SKU007', category:'家居用品', value:'6 USD', specForecast:'11 × 11 × 9 / 0.42 公制', specActual:'11 × 11 × 9 / 0.43 公制', specAverage:'11 × 11 × 9 / 0.43 公制' },
+  { warehouseCode:'USNJ07', cnName:'LED护眼台灯', enName:'LED Desk Lamp', cnDeclare:'台灯', enDeclare:'Desk Lamp', productCode:'PROD-008', customCode:'CUSTOM-008', platformCode:'EBAY-EU', sku:'SKU008', category:'家居用品', value:'12 USD', specForecast:'18 × 12 × 40 / 0.9 公制', specActual:'18 × 12 × 41 / 0.92 公制', specAverage:'18 × 12 × 40 / 0.91 公制' },
+  { warehouseCode:'USGA12', cnName:'智能运动手表', enName:'Smart Sports Watch', cnDeclare:'智能手表', enDeclare:'Smart Watch', productCode:'PROD-009', customCode:'CUSTOM-009', platformCode:'AMZ-CA', sku:'SKU009', category:'数码配件', value:'78 USD', specForecast:'4 × 4 × 1 / 0.06 公制', specActual:'4 × 4 × 1 / 0.06 公制', specAverage:'4 × 4 × 1 / 0.06 公制' },
+  { warehouseCode:'USTX03', cnName:'蓝牙音箱', enName:'Bluetooth Speaker', cnDeclare:'音箱', enDeclare:'Speaker', productCode:'PROD-010', customCode:'CUSTOM-010', platformCode:'WISH-GL', sku:'SKU010', category:'数码配件', value:'—', specForecast:'16 × 8 × 6 / 0.55 公制', specActual:'16 × 8 × 6 / 0.56 公制', specAverage:'16 × 8 × 6 / 0.56 公制' },
 ];
-const TOTAL = 56, PAGE_SIZE = 20, TOTAL_PAGES = Math.ceil(TOTAL / PAGE_SIZE);
+const TOTAL = 10, PAGE_SIZE = 10, TOTAL_PAGES = Math.ceil(TOTAL / PAGE_SIZE);
 
 function renderTable(){
   const tbody = document.getElementById('tableBody');
@@ -741,7 +745,7 @@ function renderPagination(){
   let nums = '';
   for(let i=1;i<=Math.min(TOTAL_PAGES,6);i++) nums += `<span class="pg ${i===currentPage?'active':''}" onclick="goPage(${i})">${i}</span>`;
   if(TOTAL_PAGES>6) nums += `<span class="pg pg-arrow disabled">...</span>`;
-  el.innerHTML = `<div class="pag-left">共 <b>${TOTAL}</b> 条<select class="pag-select"><option>${PAGE_SIZE}条/页</option><option>50条/页</option><option>100条/页</option></select></div><div class="pag-right"><div class="pag-nums"><span class="pg pg-arrow ${currentPage<=1?'disabled':''}" onclick="prevPage()">&lt;</span>${nums}<span class="pg pg-arrow ${currentPage>=TOTAL_PAGES?'disabled':''}" onclick="nextPage()">&gt;</span></div> 前往<input class="pag-jump" type="text" value="${currentPage}" onkeydown="if(event.key==='Enter')jumpTo(this)" />页</div>`;
+  el.innerHTML = `<div class="pag-left">共 <b>${TOTAL}</b> 条<select class="pag-select"><option>${PAGE_SIZE}条/页</option><option>20条/页</option><option>50条/页</option><option>100条/页</option></select></div><div class="pag-right"><div class="pag-nums"><span class="pg pg-arrow ${currentPage<=1?'disabled':''}" onclick="prevPage()">&lt;</span>${nums}<span class="pg pg-arrow ${currentPage>=TOTAL_PAGES?'disabled':''}" onclick="nextPage()">&gt;</span></div> 前往<input class="pag-jump" type="text" value="${currentPage}" onkeydown="if(event.key==='Enter')jumpTo(this)" />页</div>`;
 }
 function goPage(page){ page=parseInt(page,10); if(isNaN(page)||page<1)page=1; if(page>TOTAL_PAGES)page=TOTAL_PAGES; currentPage=page; renderPagination(); renderTable(); }
 function prevPage(){ goPage(currentPage-1); }
