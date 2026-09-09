@@ -796,6 +796,9 @@ window.addEventListener('resize', postHeight);
 .psec{margin-bottom:12px}
 .psec-title{font-weight:600;font-size:13px;color:#1d2129;margin:6px 0 8px;display:flex;align-items:center}
 .psec-title .n{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#8b5cf6;color:#fff;font-size:11px;font-weight:700;margin-right:6px;flex-shrink:0}
+/* 分节内子表标题名（无编号圆钮，如 品类名称/品类结构/创建信息 三列分表的表头名） */
+.psec-sub{font-weight:600;font-size:13px;color:#1d2129;margin:6px 0 4px;display:flex;align-items:center}
+.psec-sub::before{content:'';width:3px;height:12px;background:#52c41a;border-radius:2px;margin-right:6px;flex-shrink:0}
 .prow{display:grid;gap:10px;align-items:center;padding:5px 8px;border-radius:6px}
 .prow3{grid-template-columns:minmax(120px,1.1fr) minmax(104px,.9fr) 2fr}
 .prow2{grid-template-columns:minmax(120px,1fr) 2.2fr}
@@ -900,8 +903,18 @@ window.addEventListener('resize', postHeight);
   var cfg = {
     title: '卡片区说明',
     titles: [
-      ['三列标题条（品类名称 / 品类结构 / 创建信息）', '卡片区顶部外置列标题条（表头风格，不入卡）；三列与每张卡的字段列一一对齐'],
-      ['品类字段卡堆（点选品类 → 每直接下级一张）', '展示当前选中品类的全部直接下级：每下级一张白卡（右上角状态角标 + 三列字段）；无下级时该卡显示「暂无数据」']
+      { name: '品类名称', rows: [
+        ['中文名称', '品类级联选择中的显示名（中文），如「摩托车&摩托车配件」'],
+        ['英文名称', '品类的中文对照英文名，用于导出与多语言展示，如「Motorcycle & Parts」']
+      ]},
+      { name: '品类结构', rows: [
+        ['品类等级', '该品类所处的层级（一级/二级/三级）'],
+        ['父级品类', '其所属的上一级品类名；一级品类为「—」']
+      ]},
+      { name: '创建信息', rows: [
+        ['创建人', '录入该品类的操作人账号'],
+        ['创建日期', '创建/录入日期（yyyy-mm-dd）']
+      ]}
     ],
     buttons: [
       ['（左树）点选一级/二级品类', '启用', '卡片区内容刷新入口：显示其全部直接下级的字段卡'],
@@ -930,8 +943,11 @@ window.addEventListener('resize', postHeight);
   var win = document.createElement('div'); win.className = 'pinwin theme-green'; win.style.display = 'none';
   var rows = '';
   rows += '<div class="psec"><div class="psec-title"><span class="n">1</span>标题</div>';
-  rows += '<div class="prow prow2 head"><span>标题</span><span>说明</span></div>';
-  cfg.titles.forEach(function(r){ rows += '<div class="prow prow2"><span>' + r[0] + '</span><span>' + r[1] + '</span></div>'; });
+  cfg.titles.forEach(function(g){
+    rows += '<div class="psec-sub">' + g.name + '</div>';
+    rows += '<div class="prow prow2 head"><span>字段</span><span>说明</span></div>';
+    g.rows.forEach(function(r){ rows += '<div class="prow prow2"><span>' + r[0] + '</span><span>' + r[1] + '</span></div>'; });
+  });
   rows += '</div><div class="psec"><div class="psec-title"><span class="n">2</span>操作按钮</div>';
   rows += '<div class="prow prow3 head"><span>按钮</span><span>状态</span><span>说明</span></div>';
   cfg.buttons.forEach(function(r){ rows += '<div class="prow prow3"><span>' + r[0] + '</span><span>' + r[1] + '</span><span>' + r[2] + '</span></div>'; });
