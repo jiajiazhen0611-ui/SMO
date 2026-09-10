@@ -1055,9 +1055,13 @@ window.addEventListener('resize', postHeight);
   app.appendChild(dot);
   function posDot(){
     var c = app.getBoundingClientRect(), p = panel.getBoundingClientRect(), b = bar.getBoundingClientRect();
-    /* 贴左树搜索栏右缘；钳制在容器内，避免超出容器被 body{overflow:hidden} 裁切 */
-    dot.style.left = Math.min(Math.round(b.right - c.left + 6), Math.max(8, Math.round(c.width - 48))) + 'px';
-    dot.style.top = Math.round(p.top - c.top + 6) + 'px';
+    /* 【LC-OMS Pin 位置铁律】左侧区域（左树/侧栏）的 Pin 贴该区域**左缘**（页面左侧留白），严禁落在两栏之间的中部缝隙。
+       先贴左树左缘外 6px（视口坐标 = p.left - 46）；视口内不足 6px 时右移兜底，保证圆钮完整可见不被裁切。 */
+    var leftRel = Math.round(p.left - c.left - 46);
+    var viewportX = Math.round(p.left) - 46;
+    if(viewportX < 6) leftRel += 6 - viewportX;
+    dot.style.left = leftRel + 'px';
+    dot.style.top = Math.round(b.top - c.top + b.height / 2 - 20) + 'px';
   }
   posDot(); window.addEventListener('resize', posDot);
   var win = document.createElement('div'); win.className = 'pinwin'; win.style.display = 'none';
