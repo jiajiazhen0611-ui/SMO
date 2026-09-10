@@ -1102,8 +1102,8 @@ document.addEventListener('DOMContentLoaded', () => {
   app.appendChild(dot);
   function posDot(){
     var c = app.getBoundingClientRect(), p = panel.getBoundingClientRect();
-    /* 钳制在容器内：body{overflow:hidden} 会裁掉超出右缘的圆钮，故右侧最多贴到容器内 8px */
-    dot.style.left = Math.min(Math.round(p.right - c.left + 6), Math.max(8, Math.round(c.width - 48))) + 'px';
+    /* 贴区域右缘 +6px（LC-OMS §十）；页面已改自然滚动，无需旧 body overflow:hidden 时代的容器钳制 */
+    dot.style.left = Math.round(p.right - c.left + 6) + 'px';
     dot.style.top = Math.round(p.top - c.top + p.height / 2 - 20) + 'px';
   }
   posDot(); window.addEventListener('resize', posDot);
@@ -1201,7 +1201,7 @@ document.addEventListener('DOMContentLoaded', () => {
   var toolbar = area.querySelector('.table-toolbar') || area;
   function posDot(){
     var c = app.getBoundingClientRect(), h = toolbar.getBoundingClientRect();
-    dot.style.left = Math.min(Math.round(h.right - c.left + 6), Math.max(8, Math.round(c.width - 48))) + 'px';
+    dot.style.left = Math.round(h.right - c.left + 6) + 'px';
     dot.style.top = Math.round(h.top - c.top + h.height / 2 - 20) + 'px';
   }
   posDot(); window.addEventListener('resize', posDot);
