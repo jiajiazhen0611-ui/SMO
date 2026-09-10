@@ -559,12 +559,15 @@ function renderTree(items, container, level){
     row.dataset.id = item.id;
     row.onclick=function(e){ e.stopPropagation(); if(level===0 && item.id!=='m1') return; selectNode(item.id); };
 
-    // 箭头（一级品类恒显示朝右箭头作为展开语义；不为其新增二级示例，无子级时点击无副作用）
+    // 箭头：所有一级品类恒显示朝右三角（视觉与摩托车一致）；仅摩托车(m1)保留展开功能，
+    // 其余一级（含汽车配件）点击无反应（noop：不展开、不旋转、不参与展开/折叠全部）
     var arrow = document.createElement('span');
-    var expandable = hasChildren || level === 0;
-    arrow.className = 'tree-arrow' + (expandable ? '' : ' leaf');
+    var isFirst = (level === 1);
+    var expandable = hasChildren || isFirst;
+    var noop = isFirst && item.id !== 'm1';
+    arrow.className = 'tree-arrow' + (expandable ? '' : ' leaf') + (noop ? ' noop' : '');
     if(expandable) arrow.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>';
-    arrow.onclick=function(e){ e.stopPropagation(); toggleNode(item.id); };
+    arrow.onclick=function(e){ e.stopPropagation(); if(noop) return; toggleNode(item.id); };
 
     // 标签
     var label = document.createElement('span');
@@ -624,13 +627,24 @@ function selectNode(id){
 }
 
 /* ========== 树操作 ========== */
+/* ========== 树操作（仅作用于可展开节点，noop 一级箭头不旋转、其子级不参与）========== */
 function expandAll(){
-  document.querySelectorAll('.tree-children').forEach(function(el){ el.classList.add('expanded'); });
-  document.querySelectorAll('.tree-arrow:not(.leaf)').forEach(function(el){ el.classList.add('expanded'); });
+  var arrows = document.querySelectorAll('.tree-arrow:not(.leaf):not(.noop)');
+  arrows.forEach(function(el){ el.classList.add('expanded'); });
+  arrows.forEach(function(el){
+    var row = el.closest('.tree-row'), id = row && row.dataset.id;
+    var wrap = id && document.getElementById('children-'+id);
+    if(wrap) wrap.classList.add('expanded');
+  });
 }
 function collapseAll(){
-  document.querySelectorAll('.tree-children').forEach(function(el){ el.classList.remove('expanded'); });
-  document.querySelectorAll('.tree-arrow:not(.leaf)').forEach(function(el){ el.classList.remove('expanded'); });
+  var arrows = document.querySelectorAll('.tree-arrow:not(.leaf):not(.noop)');
+  arrows.forEach(function(el){ el.classList.remove('expanded'); });
+  arrows.forEach(function(el){
+    var row = el.closest('.tree-row'), id = row && row.dataset.id;
+    var wrap = id && document.getElementById('children-'+id);
+    if(wrap) wrap.classList.remove('expanded');
+  });
 }
 function resetTree(){
   document.getElementById('treeSearch').value = '';
