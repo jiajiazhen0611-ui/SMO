@@ -89,10 +89,21 @@
   .hnav-sub:hover{color:var(--primary);background:var(--bg)}
   .hnav-sub.active{color:var(--primary);font-weight:500;background:var(--bg)}
 
+  /* ============ 页面路径（面包屑，壳层常驻，位于 Header 与内容区之间） ============ */
+  .crumb-bar{background:transparent;height:40px;display:flex;align-items:center}
+  .crumb-inner{
+    max-width:1400px;margin:0 auto;width:100%;padding:0 24px;
+    display:flex;align-items:center;flex-wrap:wrap;font-size:13px;
+  }
+  .crumb-item{color:var(--text-tertiary);cursor:pointer;transition:color .2s}
+  .crumb-item:hover{color:var(--primary)}
+  .crumb-sep{color:var(--text-quaternary);margin:0 6px;user-select:none}
+  .crumb-current{color:var(--text);font-weight:500;cursor:default}
+
   /* ============ 内容 iframe ============ */
   #contentFrame{display:block;width:100%;border:none;background:var(--bg);min-height:1000px}
-  @media (max-width:900px){.header-inner{padding:0 16px}.header-nav{margin-left:12px}}
-  @media (max-width:600px){.header-inner{padding:0 12px}.header-nav{margin-left:8px}}
+  @media (max-width:900px){.header-inner{padding:0 16px}.header-nav{margin-left:12px}.crumb-inner{padding:0 16px}}
+  @media (max-width:600px){.header-inner{padding:0 12px}.header-nav{margin-left:8px}.crumb-inner{padding:0 12px}}
   @media (prefers-reduced-motion:reduce){*{animation-duration:0!important;transition-duration:0!important}}
 </style>
 </head>
@@ -169,6 +180,9 @@
   </div>
 </header>
 
+<!-- ============ 页面路径（面包屑，壳层常驻，随导航自动更新） ============ -->
+<div class="crumb-bar"><div class="crumb-inner" id="crumbBar"></div></div>
+
 <!-- ============ 业务内容（远程加载） ============ -->
 <iframe id="contentFrame" title="客户中台内容区"></iframe>
 
@@ -177,11 +191,58 @@
 // 内容源：默认同目录 content-<page>.html（首页→content-home.html，商品管理→content-shangpin.html）
 const CONTENT_BASE = './';
 const FRAME = document.getElementById('contentFrame');
+const CRUMB = document.getElementById('crumbBar');
+
 // 初始加载带时间戳，绕过浏览器缓存（否则改了内容页却看不到变化）
 // 默认显示首页（content-home.html），见 https://jiajiazhen0611-ui.github.io/SMO/
 FRAME.src = CONTENT_BASE + 'content-home.html?t=' + Date.now();
 
-// 内容区高度自适应（content 通过 postMessage 上报）
+/* ============ 页面路径（面包屑，从导航 DOM 自动推导，不维护映射表） ============ */
+// 返回 [{text, page}]：一级模块（可点击，跳到该模块下第一个子页面）+ 当前页
+function resolveCrumb(item){
+  if(!item) return [];
+  const page = item.dataset.page || 'home';
+  const text = (item.textContent || '').trim();
+  const dd = item.closest('.hnav-dropdown');
+  if(!dd) return [{text: text, page: page}];               // 直属项（首页）：只显示自身一级
+  const trigger = dd.querySelector('.hnav-trigger');
+  const modText = trigger ? (trigger.textContent || '').trim() : '';
+  const firstSub = dd.querySelector('.hnav-sub[data-page]');
+  if(!modText || !firstSub) return [{text: text, page: page}];
+  return [{text: modText, page: firstSub.dataset.page}, {text: text, page: page}];
+}
+
+function renderCrumb(item){
+  const parts = resolveCrumb(item);
+  CRUMB.innerHTML = '';
+  parts.forEach(function(p, i){
+    if(i > 0){
+      const sep = document.createElement('span');
+      sep.className = 'crumb-sep';
+      sep.textContent = '/';
+      CRUMB.appendChild(sep);
+    }
+    const el = document.createElement('span');
+    el.textContent = p.text;
+    if(i === parts.length - 1){
+      el.className = 'crumb-current';
+    }else{
+      el.className = 'crumb-item';
+      el.dataset.page = p.page;
+    }
+    CRUMB.appendChild(el);
+  });
+}
+
+// 面包屑上级点击 → 复用导航路由切页
+CRUMB.addEventListener('click', function(e){
+  const el = e.target.closest('.crumb-item[data-page]');
+  if(!el) return;
+  const target = document.querySelector('.hnav-sub[data-page="' + el.dataset.page + '"],.hnav-item[data-page="' + el.dataset.page + '"]');
+  if(target) route(target);
+});
+
+/* ============ 内容区高度自适应（content 通过 postMessage 上报） ============ */
 // 契约：内容页统一发 {type:'resize', height}；此处同时兼容旧写法 {type:'height', value}，避免某一页发错类型导致 iframe 不增长、内容在 iframe 内滚动看不全
 window.addEventListener('message', e => {
   const d = e.data || {};
@@ -191,16 +252,25 @@ window.addEventListener('message', e => {
   }
 });
 
-// 导航路由（点击切换 content-<page>.html）
-document.getElementById('headerNav').addEventListener('click', e => {
-  const item = e.target.closest('[data-page]');
+/* ============ 导航路由（点击切换 content-<page>.html） ============ */
+function route(item){
   if(!item) return;
-  e.preventDefault();
   document.querySelectorAll('.hnav-item,.hnav-sub').forEach(n => n.classList.remove('active'));
   item.classList.add('active');
   const page = item.dataset.page || 'home';
   FRAME.src = CONTENT_BASE + 'content-' + page + '.html?t=' + Date.now();
+  renderCrumb(item);
+}
+
+document.getElementById('headerNav').addEventListener('click', e => {
+  const item = e.target.closest('[data-page]');
+  if(!item) return;
+  e.preventDefault();
+  route(item);
 });
+
+// 首屏：默认页面「首页」的路径
+renderCrumb(document.querySelector('.hnav-item[data-page="home"]'));
 
 </script>
 </body>
