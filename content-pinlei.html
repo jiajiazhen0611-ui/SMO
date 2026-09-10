@@ -889,11 +889,11 @@ document.addEventListener('DOMContentLoaded', function(){
   renderArea();   /* 打开即展示全部品级品类卡片（每页 10 张，LC-OMS 分页） */
 });
 
-/* ========== iframe 高度上报（壳层要求）========== */
+/* ========== iframe 高度上报（壳层契约：必须发 {type:'resize', height}，否则壳层不收、iframe 不增长）========== */
 function postHeight(){
   try{
-    var h = Math.max(document.documentElement.scrollHeight, document.body.scrollHeight);
-    window.parent.postMessage({type:'height',value:h+32},'*');
+    var h = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight, window.innerHeight);
+    if(window.parent !== window) window.parent.postMessage({ type:'resize', height:h }, '*');
   }catch(e){}
 }
 window.addEventListener('load', postHeight);

@@ -182,9 +182,12 @@ const FRAME = document.getElementById('contentFrame');
 FRAME.src = CONTENT_BASE + 'content-home.html?t=' + Date.now();
 
 // 内容区高度自适应（content 通过 postMessage 上报）
+// 契约：内容页统一发 {type:'resize', height}；此处同时兼容旧写法 {type:'height', value}，避免某一页发错类型导致 iframe 不增长、内容在 iframe 内滚动看不全
 window.addEventListener('message', e => {
-  if(e.data && e.data.type === 'resize'){
-    FRAME.style.height = e.data.height + 'px';
+  const d = e.data || {};
+  if(d.type === 'resize' || d.type === 'height'){
+    const h = (d.height != null) ? d.height : d.value;
+    if(h) FRAME.style.height = Math.round(h) + 'px';
   }
 });
 
