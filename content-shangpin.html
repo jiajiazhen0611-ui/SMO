@@ -484,7 +484,7 @@
   <div class="proto-desc doc-section" data-proto-desc="3"><div class="doc-label"><span class="doc-num">3</span> 工具栏</div><div class="doc-desc">行级批量操作入口：添加 / 导入 / 导出 / 废弃（危险操作红色）。按钮位于表格左上，整体靠左。</div></div>
   <div class="proto-desc doc-section" data-proto-desc="4"><div class="doc-label"><span class="doc-num">4</span> 卡片式表格行</div><div class="doc-desc">每行独立白卡 = 主数据行 + 备注行，两行紧贴合并；卡间留 12px 透明缝隙透出页面背景 #f5f7fa。外层 table-panel 不设背景，保证缝隙显白。</div></div>
   <div class="proto-desc doc-section" data-proto-desc="5"><div class="doc-label"><span class="doc-num">5</span> 字段冒号对齐</div><div class="doc-desc">卡片字段标签右对齐 + 固定宽度（flex-basis），实现各列冒号垂直对齐；最长标签左缘与列标题左缘对齐。例：商品名称列 7em / 商品编码列 6em / 商品属性列 3em。</div></div>
-  <div class="proto-desc doc-section" data-proto-desc="6"><div class="doc-label"><span class="doc-num">6</span> 详情抽屉</div><div class="doc-desc">点击每行「详情」右侧滑出抽屉，展示基本信息 / 备注 / 操作记录（时间线）。ESC 或点击遮罩关闭。</div></div>
+  <div class="proto-desc doc-section" data-proto-desc="6"><div class="doc-label"><span class="doc-num">6</span> 编辑抽屉</div><div class="doc-desc">点击每行「编辑」右侧滑出抽屉，展示基本信息 / 备注 / 操作记录（时间线）。ESC 或点击遮罩关闭。</div></div>
 </div>
 <button class="doc-fab" id="docFab" onclick="toggleDocPanel(true)">ⓘ 功能说明</button>
 
@@ -587,7 +587,7 @@ window.addEventListener('resize',function(){updatePinPositions();var p=document.
 <aside class="drawer" id="drawer" aria-hidden="true">
   <div class="drawer-head">
     <div>
-      <h3 id="drawTitle">详情</h3>
+      <h3 id="drawTitle">编辑</h3>
       <p id="drawSub"></p>
     </div>
     <button class="drawer-close" id="drawerClose" aria-label="关闭">
@@ -669,7 +669,7 @@ function renderTable(){
         <div class="field"><span class="f-label">修改人：</span><span class="f-val">${row.modifier}</span></div>
         <div class="field"><span class="f-label">修改时间：</span><span class="f-val">${row.modifyTime}</span></div>
       </td>
-      <td style="text-align:left;vertical-align:middle"><span class="row-status" style="color:${st.color};background:${st.bg};border-left:1px solid ${st.border};border-bottom:1px solid ${st.border}">${row.status||'草稿'}</span><button class="abtn abtn-link" ${i===0?'data-proto-id="6"':''} onclick="openDrawer('${row.code}')">详情</button></td>
+      <td style="text-align:left;vertical-align:middle"><span class="row-status" style="color:${st.color};background:${st.bg};border-left:1px solid ${st.border};border-bottom:1px solid ${st.border}">${row.status||'草稿'}</span><button class="abtn abtn-link" ${i===0?'data-proto-id="6"':''} onclick="openDrawer('${row.code}')">编辑</button></td>
     </tr>
     <tr class="row-remark" data-card="${i}">
       <td></td>
@@ -714,7 +714,7 @@ function jumpTo(input){ goPage(input.value); }
 /* ============ 抽屉 ============ */
 function openDrawer(code){
   const row = TABLE_DATA.find(r => r.code === code); if(!row) return;
-  document.getElementById('drawTitle').textContent = row.sku+' 详情';
+  document.getElementById('drawTitle').textContent = row.sku+' 编辑';
   document.getElementById('drawSub').textContent = 'SKU: '+row.code;
   document.getElementById('drawerBody').innerHTML = `
     <div><div class="dsec-title">基本信息</div>
@@ -1180,7 +1180,7 @@ document.addEventListener('DOMContentLoaded', () => {
       ['导入', '启用', 'Excel 批量导入商品（演示占位）'],
       ['导出', '启用', '将当前列表导出（演示占位）'],
       ['废弃', '勾选后启用', '批量废弃所选商品（红色危险操作，演示占位）'],
-      ['详情（行内链接）', '启用', '打开右侧抽屉查看完整信息（只读，最高频操作）']
+      ['编辑（行内链接）', '启用', '打开右侧抽屉编辑该商品信息（演示占位）']
     ],
     statuses: [
       ['草稿（蓝）', '新建未提交，可编辑'],
