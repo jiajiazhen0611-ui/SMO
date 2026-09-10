@@ -786,6 +786,11 @@ window.addEventListener('resize', postHeight);
 #appContainer{position:relative}
 #apin-search{position:absolute;z-index:120;width:40px;height:40px;border-radius:50%;background:#ede9fe;color:#7c3aed;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;letter-spacing:.5px;cursor:pointer;box-shadow:0 2px 10px rgba(139,92,246,.4);border:2px solid #a78bfa;user-select:none;transition:transform .15s,background .15s;line-height:1}
 #apin-search:hover{transform:scale(1.12);background:#ddd6fe}
+/* ===== 左侧品类树搜索框 PRD Pin（同为「搜索区」紫板）：贴品类树搜索栏右缘 ===== */
+#apin-treesearch{position:absolute;z-index:120;width:40px;height:40px;border-radius:50%;background:#ede9fe;color:#7c3aed;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;letter-spacing:.5px;cursor:pointer;box-shadow:0 2px 10px rgba(139,92,246,.4);border:2px solid #a78bfa;user-select:none;transition:transform .15s,background .15s;line-height:1}
+#apin-treesearch:hover{transform:scale(1.12);background:#ddd6fe}
+/* 高亮落在外层 .tree-panel：.tree-header 受 tree-panel overflow:hidden 裁切，环画在 header 上会被切掉 */
+.tree-panel.apin-highlight{box-shadow:0 0 0 2px #a78bfa,0 0 22px rgba(139,92,246,.5)!important}
 .filter-bar.apin-highlight{box-shadow:0 0 0 2px #a78bfa,0 0 22px rgba(139,92,246,.5)!important}
 .pinwin{position:absolute;z-index:400;width:470px;min-width:300px;min-height:180px;background:#fff;border:1px solid #e5e6eb;border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.16);display:flex;flex-direction:column;font-size:13px;color:#1d2129;overflow:hidden}
 .pinwin-head{display:flex;align-items:center;gap:8px;padding:9px 10px 9px 14px;background:#8b5cf6;color:#fff;cursor:move;user-select:none;flex-shrink:0}
@@ -1004,6 +1009,102 @@ window.addEventListener('resize', postHeight);
     var sx = e.clientX, sy = e.clientY, ow = win.offsetWidth, oh = win.offsetHeight;
     function mv2(ev){
       /* 无宽/高上限：最小 300×200，可自由拉大（整窗不被裁剪遮挡，内容随宽换行） */
+      win.style.width = Math.max(300, ow + ev.clientX - sx) + 'px';
+      win.style.height = Math.max(200, oh + ev.clientY - sy) + 'px';
+    }
+    function up2(){ document.removeEventListener('mousemove', mv2); document.removeEventListener('mouseup', up2); syncHeight(); }
+    document.addEventListener('mousemove', mv2); document.addEventListener('mouseup', up2);
+  });
+})();
+</script>
+<script>
+/* ===== 左侧品类树搜索框 PRD（紫：同为「搜索区」色板；区域=左侧品类树面板） ===== */
+(function(){
+  var cfg = {
+    title: '品类树搜索说明',
+    secs: [
+      { name: '搜索条件', build: function(){
+          var h = '<div class="prow prow3 head"><span>条件</span><span>类型</span><span>说明</span></div>';
+          this.rows.forEach(function(r){ h += '<div class="prow prow3"><span>' + r[0] + '</span><span>' + r[1] + '</span><span>' + r[2] + '</span></div>'; });
+          return h;
+        },
+        rows: [
+          ['请输入关键字', '文本输入', '按品类名称模糊过滤左侧品类树；支持回车即查']
+        ]
+      },
+      { name: '操作按钮', build: function(){
+          var h = '<div class="prow prow2 head"><span>按钮</span><span>说明</span></div>';
+          this.rows.forEach(function(r){ h += '<div class="prow prow2"><span>' + r[0] + '</span><span>' + r[1] + '</span></div>'; });
+          return h;
+        },
+        rows: [
+          ['搜索 🔍（搜索框内）', '按当前关键字过滤品类树（常显）'],
+          ['清除 ×（搜索框内）', '清空关键字（悬停搜索框时显示）'],
+          ['重置（搜索框右侧）', '清空关键字 + 折叠全部层级 + 取消选中，右侧卡片区一并清空'],
+          ['⋮ 菜单（重置右侧）', '展开全部 / 折叠全部：一键展开或收起全部品类层级']
+        ]
+      }
+    ]
+  };
+  var app = document.getElementById('appContainer');
+  var panel = document.querySelector('.tree-panel');
+  var bar = document.querySelector('.tree-header') || panel;
+  if(!app || !panel || !bar) return;
+  var dot = document.createElement('div');
+  dot.id = 'apin-treesearch'; dot.title = cfg.title; dot.textContent = 'PRD';
+  app.appendChild(dot);
+  function posDot(){
+    var c = app.getBoundingClientRect(), p = panel.getBoundingClientRect(), b = bar.getBoundingClientRect();
+    /* 贴左树搜索栏右缘；钳制在容器内，避免超出容器被 body{overflow:hidden} 裁切 */
+    dot.style.left = Math.min(Math.round(b.right - c.left + 6), Math.max(8, Math.round(c.width - 48))) + 'px';
+    dot.style.top = Math.round(p.top - c.top + 6) + 'px';
+  }
+  posDot(); window.addEventListener('resize', posDot);
+  var win = document.createElement('div'); win.className = 'pinwin'; win.style.display = 'none';
+  var rows = '';
+  cfg.secs.forEach(function(s, idx){
+    rows += '<div class="psec"><div class="psec-title"><span class="n">' + (idx + 1) + '</span>' + s.name + '</div>';
+    rows += s.build();
+    rows += '</div>';
+  });
+  win.innerHTML = '<div class="pinwin-head"><span class="pinwin-title">' + cfg.title + '</span><button class="pinwin-close" title="关闭">×</button></div><div class="pinwin-body">' + rows + '</div><div class="pinwin-rs" title="拖拽右下角缩放"></div>';
+  document.body.appendChild(win);
+  var head = win.querySelector('.pinwin-head'), close = win.querySelector('.pinwin-close'), rs = win.querySelector('.pinwin-rs');
+  var open = false, hovered = false;
+  function refresh(){ panel.classList.toggle('apin-highlight', open || hovered); }
+  dot.addEventListener('mouseenter', function(){ hovered = true; refresh(); });
+  dot.addEventListener('mouseleave', function(){ hovered = false; refresh(); });
+  function docExt(){ var de=document.documentElement,b=document.body; return { w:Math.max(de.scrollWidth,b.scrollWidth?b.scrollWidth:0), h:Math.max(de.scrollHeight,b.scrollHeight?b.scrollHeight:0) }; }
+  function syncHeight(){ if(window.postHeight) window.postHeight(); }
+  function position(){
+    var b = bar.getBoundingClientRect();
+    var sx = window.pageXOffset || 0, sy = window.pageYOffset || 0;
+    win.style.left = Math.max(8, b.right + sx + 8) + 'px';
+    win.style.top = Math.max(8, b.top + sy + 4) + 'px';
+  }
+  function toggle(){
+    if(open){ win.style.display = 'none'; open = false; }
+    else { win.style.display = 'flex'; position(); open = true; syncHeight(); }
+    refresh();
+  }
+  dot.addEventListener('click', toggle);
+  close.addEventListener('click', toggle);
+  head.addEventListener('mousedown', function(e){
+    if(e.target.closest('.pinwin-close')) return;
+    var sx = e.clientX, sy = e.clientY, oL = win.offsetLeft, oT = win.offsetTop;
+    function mv(ev){
+      var d = docExt();
+      var L = Math.min(Math.max(ev.clientX - sx + oL, -win.offsetWidth + 90), d.w - 40);
+      var T = Math.min(Math.max(ev.clientY - sy + oT, -win.offsetHeight + 90), d.h - 40);
+      win.style.left = L + 'px'; win.style.top = T + 'px';
+    }
+    function up(){ document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); syncHeight(); }
+    document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
+  });
+  rs.addEventListener('mousedown', function(e){
+    e.preventDefault(); e.stopPropagation();
+    var sx = e.clientX, sy = e.clientY, ow = win.offsetWidth, oh = win.offsetHeight;
+    function mv2(ev){
       win.style.width = Math.max(300, ow + ev.clientX - sx) + 'px';
       win.style.height = Math.max(200, oh + ev.clientY - sy) + 'px';
     }
