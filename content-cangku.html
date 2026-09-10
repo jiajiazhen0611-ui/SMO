@@ -1171,10 +1171,15 @@ document.addEventListener('DOMContentLoaded', () => {
 .pinwin.theme-green .pinwin-rs{background:linear-gradient(135deg,transparent 55%,rgba(82,196,26,.6) 55%)}
 </style>
 <script>
-/* ===== 卡片区单 Pin + 浮窗（内容：标题 / 操作按钮 / 状态说明） ===== */
+/* ===== 卡片区单 Pin + 浮窗（内容：背景说明 / 标题 / 操作按钮 / 状态说明，LC-OMS §十） ===== */
 (function(){
   var cfg = {
     title: '卡片区说明',
+    /* LC-OMS §十：开头第一节固定「背景说明」，1. 2. 分点、一般两点；不分点阐述分页控件 */
+    bg: [
+      '仓库商品页用于按仓库查看各 SKU 商品的编码、属性、规格尺重与货值信息，支持筛选定位与批量更新尺重。',
+      '默认展示全部仓库的商品记录，每页十条。'
+    ],
     titles: [
       ['仓库商品列表', '仓库维度下 SKU 级库存与申报信息，六列卡片式行表格'],
       ['表头分组', '勾选 / 仓库 / 商品名称 / 商品编码 / 商品属性 / 规格信息']
@@ -1182,8 +1187,7 @@ document.addEventListener('DOMContentLoaded', () => {
     buttons: [
       ['更新尺重', '启用', '海外仓复测后批量回写实测尺寸 / 重量（演示弹提示）'],
       ['查看详情', '启用', '点击商品名称或 SKU 打开右侧抽屉，查看该 SKU 完整字段（只读，最高频）'],
-      ['勾选（表头全选 / 行选）', '启用', '圈定批量操作范围'],
-      ['分页 / 每页条数', '启用', '切换每页条数并翻页浏览全部记录']
+      ['勾选（表头全选 / 行选）', '启用', '圈定批量操作范围']
     ],
     statuses: [
       ['“—” 占位', '货值、重量等缺省值以 — 显示，不代表异常'],
@@ -1207,13 +1211,15 @@ document.addEventListener('DOMContentLoaded', () => {
   posDot(); window.addEventListener('resize', posDot);
   var win = document.createElement('div'); win.className = 'pinwin theme-green'; win.style.display = 'none';
   var rows = '';
-  rows += '<div class="psec"><div class="psec-title"><span class="n">1</span>标题</div>';
+  rows += '<div class="psec"><div class="psec-title"><span class="n">1</span>背景说明</div>';
+  cfg.bg.forEach(function(t, i){ rows += '<div class="prow"><span>' + (i + 1) + '. ' + t + '</span></div>'; });
+  rows += '</div><div class="psec"><div class="psec-title"><span class="n">2</span>标题</div>';
   rows += '<div class="prow prow2 head"><span>标题</span><span>说明</span></div>';
   cfg.titles.forEach(function(r){ rows += '<div class="prow prow2"><span>' + r[0] + '</span><span>' + r[1] + '</span></div>'; });
-  rows += '</div><div class="psec"><div class="psec-title"><span class="n">2</span>操作按钮</div>';
+  rows += '</div><div class="psec"><div class="psec-title"><span class="n">3</span>操作按钮</div>';
   rows += '<div class="prow prow3 head"><span>按钮</span><span>状态</span><span>说明</span></div>';
   cfg.buttons.forEach(function(r){ rows += '<div class="prow prow3"><span>' + r[0] + '</span><span>' + r[1] + '</span><span>' + r[2] + '</span></div>'; });
-  rows += '</div><div class="psec"><div class="psec-title"><span class="n">3</span>状态说明</div>';
+  rows += '</div><div class="psec"><div class="psec-title"><span class="n">4</span>状态说明</div>';
   rows += '<div class="prow prow2 head"><span>状态名</span><span>说明</span></div>';
   cfg.statuses.forEach(function(r){ rows += '<div class="prow prow2"><span>' + r[0] + '</span><span>' + r[1] + '</span></div>'; });
   rows += '</div>';
