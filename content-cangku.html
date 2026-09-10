@@ -1169,6 +1169,9 @@ document.addEventListener('DOMContentLoaded', () => {
 .pinwin.theme-green .pinwin-head{background:#52c41a}
 .pinwin.theme-green .psec-title .n{background:#52c41a}
 .pinwin.theme-green .pinwin-rs{background:linear-gradient(135deg,transparent 55%,rgba(82,196,26,.6) 55%)}
+/* 标题节分块小标题（列名）：与品类管理页卡片区同款绿条 */
+.psec-sub{font-weight:600;font-size:13px;color:#1d2129;margin:6px 0 4px;display:flex;align-items:center}
+.psec-sub::before{content:'';width:3px;height:12px;background:#52c41a;border-radius:2px;margin-right:6px;flex-shrink:0}
 </style>
 <script>
 /* ===== 卡片区单 Pin + 浮窗（内容：背景说明 / 标题 / 操作按钮 / 状态说明，LC-OMS §十） ===== */
@@ -1181,8 +1184,30 @@ document.addEventListener('DOMContentLoaded', () => {
       '默认展示全部仓库的商品记录，每页十条。'
     ],
     titles: [
-      ['仓库商品列表', '仓库维度下 SKU 级库存与申报信息，六列卡片式行表格'],
-      ['表头分组', '勾选 / 仓库 / 商品名称 / 商品编码 / 商品属性 / 规格信息']
+      { name: '仓库', rows: [
+        ['仓库代码', '商品所在仓库的代码，如 USLAX09']
+      ]},
+      { name: '商品名称', rows: [
+        ['中文商品名称', '商品的中文名'],
+        ['英文商品名称', '商品的英文名'],
+        ['中文申报品名', '报关用的中文品名'],
+        ['英文申报品名', '报关用的英文品名']
+      ]},
+      { name: '商品编码', rows: [
+        ['商品代码', '系统内的商品编码'],
+        ['自定义编码', '客户自己编的商品编码'],
+        ['平台编码', '电商平台上的商品编码'],
+        ['SKU', '商品最小库存单元的编码']
+      ]},
+      { name: '商品属性', rows: [
+        ['品类', '商品所属品类'],
+        ['货值', '商品申报货值']
+      ]},
+      { name: '规格信息', rows: [
+        ['预报尺寸/重量', '客户预报的尺寸与重量（公制）'],
+        ['实际尺寸/重量', '海外仓实测的尺寸与重量（公制）'],
+        ['平均尺寸/重量', '预报与实测的平均值（公制）']
+      ]}
     ],
     buttons: [
       ['更新尺重', '启用', '海外仓复测后批量回写实测尺寸 / 重量（演示弹提示）'],
@@ -1214,8 +1239,12 @@ document.addEventListener('DOMContentLoaded', () => {
   rows += '<div class="psec"><div class="psec-title"><span class="n">1</span>背景说明</div>';
   cfg.bg.forEach(function(t, i){ rows += '<div class="prow"><span>' + (i + 1) + '. ' + t + '</span></div>'; });
   rows += '</div><div class="psec"><div class="psec-title"><span class="n">2</span>标题</div>';
-  rows += '<div class="prow prow2 head"><span>标题</span><span>说明</span></div>';
-  cfg.titles.forEach(function(r){ rows += '<div class="prow prow2"><span>' + r[0] + '</span><span>' + r[1] + '</span></div>'; });
+  /* 按卡片列标题分块：每块 = 小标题（列名）+ 字段 | 说明（LC-OMS：与品类管理页卡片区同款） */
+  cfg.titles.forEach(function(g){
+    rows += '<div class="psec-sub">' + g.name + '</div>';
+    rows += '<div class="prow prow2 head"><span>字段</span><span>说明</span></div>';
+    g.rows.forEach(function(r){ rows += '<div class="prow prow2"><span>' + r[0] + '</span><span>' + r[1] + '</span></div>'; });
+  });
   rows += '</div><div class="psec"><div class="psec-title"><span class="n">3</span>操作按钮</div>';
   rows += '<div class="prow prow3 head"><span>按钮</span><span>状态</span><span>说明</span></div>';
   cfg.buttons.forEach(function(r){ rows += '<div class="prow prow3"><span>' + r[0] + '</span><span>' + r[1] + '</span><span>' + r[2] + '</span></div>'; });
