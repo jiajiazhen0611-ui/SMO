@@ -1068,9 +1068,19 @@ window.addEventListener('resize', postHeight);
 (function(){
   var cfg = {
     title: '卡片区说明',
-    /* 区域 PRD 按实际内容取舍：卡片区为只读字段卡（无行内操作按钮），另有底部「分页」控件。
-       secs 里有什么就渲染什么，序号自动连续；此处结构即为「非固定三件套」的实现方式。 */
+    /* 区域 PRD 按实际内容取舍：开头一段「背景说明」简述页面作用与默认展示；只读字段卡无操作按钮 → 不设「操作按钮」节。 */
     secs: [
+      { name: '背景说明', build: function(){
+          var h = '';
+          this.lines.forEach(function(t, i){ h += '<div class="prow"><span>' + (i + 1) + '. ' + t + '</span></div>'; });
+          return h;
+        },
+        lines: [
+          '<b>背景说明：</b>品类管理页用于维护商品品类的三级层级结构（一级/二级/三级），为商品挂接、筛选与统计分析提供基础数据；本页为只读展示层。',
+          '默认展示全部品级的品类卡片，每页十条。',
+          '点选左侧品类树节点则切换为该节点的全部直接下级。'
+        ]
+      },
       { name: '标题', build: function(){
           var h = '';
           this.titles.forEach(function(g){
@@ -1093,19 +1103,6 @@ window.addEventListener('resize', postHeight);
             ['创建人', '录入该品类的操作人账号'],
             ['创建日期', '创建/录入日期（yyyy-mm-dd HH:mm:ss）']
           ]}
-        ]
-      },
-      { name: '分页', build: function(){
-          var h = '<div class="prow prow2 head"><span>控件</span><span>说明</span></div>';
-          this.rows.forEach(function(r){ h += '<div class="prow prow2"><span>' + r[0] + '</span><span>' + r[1] + '</span></div>'; });
-          return h;
-        },
-        rows: [
-          ['列表范围', '默认展示全部品级（一级/二级/三级，共 30 条）的品类卡片；点选左侧品类树节点则切换为该节点的全部直接下级'],
-          ['共 N 条', '当前列表总条数（随所选节点 / 品类等级过滤变化）'],
-          ['每页条数', '下拉可选 10 / 25 / 50 / 100 / 500 / 1000 / 5000 条，默认 10 条/页，切换后回到第 1 页'],
-          ['页码', '数字页码 + 上一页 / 下一页（首末页箭头置灰），当前页主蓝高亮，整体靠右'],
-          ['前往 N 页', '输入页码回车直达该页']
         ]
       },
       { name: '状态说明', build: function(){
