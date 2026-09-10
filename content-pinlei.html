@@ -214,6 +214,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang SC
 .empty-hint{text-align:center;padding:60px 20px;color:var(--text-tertiary);font-size:14px}
 .empty-hint .empty-icon{font-size:48px;margin-bottom:12px;opacity:.35}
 
+/* ---------- 分页（LC-OMS §五：整体靠右；默认每页 10 条，可选 20/50/100）---------- */
+.pagination{display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:14px 4px 2px;font-size:13px;color:var(--text-secondary)}
+.pag-left{display:flex;align-items:center;gap:4px}
+.pag-select{height:28px;border:1px solid var(--border);border-radius:var(--radius-sm);padding:0 6px;font-size:13px;outline:none;cursor:pointer;margin:0 4px}
+.pag-nums{display:flex;align-items:center;gap:4px}
+.pg{min-width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;border-radius:var(--radius-sm);font-size:13px;cursor:pointer;transition:all .2s;border:1px solid transparent;color:var(--text)}
+.pg:hover{color:var(--primary);border-color:var(--primary-border)}
+.pg.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.pg.disabled{color:var(--text-quaternary);cursor:not-allowed}
+.pg-arrow{font-size:12px}
+.pag-right{display:flex;align-items:center;gap:8px}
+.pag-jump{width:48px;height:28px;border:1px solid var(--border);border-radius:var(--radius-sm);text-align:center;font-size:13px;outline:none}
+.pag-jump:focus{border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-bg)}
+
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:0!important;transition-duration:0!important}}
 </style>
 </head>
@@ -343,6 +357,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang SC
     </div>
     <!-- 字段卡片区：点父级显示其全部直接下级，每个下级一张字段卡片（含右上角状态角标） -->
     <div class="card-stack" id="cardStack"></div>
+    <!-- 分页（LC-OMS §五：整体靠右、默认每页 10 条） -->
+    <div class="pagination" id="pagination"></div>
   </div>
 
 </div><!-- /right-panel -->
@@ -401,6 +417,134 @@ var detailData = {
 
 /* 当前选中 */
 var currentId = null;
+
+/* ========== 全部品级列表（默认视图）+ 分页状态（LC-OMS §五：默认每页 10 条）========== */
+var pageSize = 10, currentPage = 1, levelFilter = '';
+
+var LEVEL_TXT = { 1:'一级品类', 2:'二级品类', 3:'三级品类' };
+/* 英文名映射（无对应数据时回落 '—'） */
+var CAT_EN = {
+  '摩托车&摩托车配件':'Motorcycle & Parts', '婴儿用品':'Baby Products', '数码相机/摄像机':'Cameras & Photo',
+  '商业及工业':'Business & Industrial', '手机与配件':'Cell Phones & Accessories', '服装，鞋类及配件':'Clothing, Shoes & Accessories',
+  '计算机/平板电脑/网络设备':'Computers/Tablets & Networking', '消费性电子产品':'Consumer Electronics', '健康与美容':'Health & Beauty',
+  '家居与园艺':'Home & Garden', '珠宝与手表':'Jewelry & Watches', '乐器':'Musical Instruments & Gear',
+  '宠物用品':'Pet Supplies', '体育运动/健身/户外':'Sporting Goods', '玩具/动漫/模型/毛绒':'Toys & Hobbies',
+  '旅行':'Travel', '汽车，汽车配件':'eBay Motors', 'others ID':'Others', '画画用品':'Art Supplies',
+  '布兰德':'Brand', '空气清新剂':'Air Freshener', '文具用品':'Stationery & School Supplies',
+  '配件':'Accessories', '食品机械':'Food Machinery', '无ID':'No ID', '摩托车配件':'Motorcycle Parts'
+};
+var CREATORS = ['系统管理员','张三','李四','王五','赵六'];
+
+/* 把三级品类树拍平成「全部品级」列表（一级/二级/三级混合，共 30 条） */
+function flattenCats(items, level, parent, out){
+  out = out || [];
+  items.forEach(function(it){
+    out.push({ id: it.id, name: it.name, level: level, parent: parent });
+    if(it.children && it.children.length) flattenCats(it.children, level + 1, it.name, out);
+  });
+  return out;
+}
+var ALL_CATS = flattenCats(categoryData, 1, '—');
+var CAT_INDEX = {};
+ALL_CATS.forEach(function(n){ CAT_INDEX[n.id] = n; });
+
+/* 合成一条卡片记录：优先用 detailData，缺失字段按索引稳定生成（原型 mock） */
+function catRecord(node, idx){
+  var d = detailData[node.id] || {};
+  return {
+    levelCode: String(node.level || ''),
+    cn: d.cn || node.name || '—',
+    en: d.en || CAT_EN[node.name] || '—',
+    level: d.level || LEVEL_TXT[node.level] || '—',
+    parent: d.parent || node.parent || '—',
+    creator: d.creator || CREATORS[idx % CREATORS.length],
+    date: d.date || ('2025-' + pad(1 + (idx % 9)) + '-' + pad(8 + (idx % 20)) + ' ' + pad(9 + (idx % 9)) + ':' + pad((idx * 7) % 60) + ':' + pad((idx * 13) % 60)),
+    status: d.status || ((idx % 7 === 3) ? '禁止' : '启用')
+  };
+}
+
+/* 当前应展示的记录集：选中树节点 → 其全部直接下级；未选中 → 全部品级（可再按等级过滤） */
+function recordsForList(){
+  if(currentId){
+    var n = findTreeNode(currentId);
+    if(!n || !n.children || !n.children.length) return [];   /* 叶子 → 空态 */
+    var lv = CAT_INDEX[currentId] ? CAT_INDEX[currentId].level + 1 : 2;
+    return n.children.map(function(c, i){ return catRecord({ id:c.id, name:c.name, level:lv, parent:n.name }, i); });
+  }
+  var all = ALL_CATS.map(function(node, i){ return catRecord(node, i); });
+  if(levelFilter) all = all.filter(function(r){ return r.levelCode === levelFilter; });
+  return all;
+}
+
+/* 单张字段卡（状态角标：启用=浅绿 / 禁止=淡红） */
+function buildCard(rec){
+  var card = document.createElement('div');
+  card.className = 'detail-card';
+  if(rec.status){
+    var st = document.createElement('span');
+    st.className = 'row-status status-' + (rec.status === '启用' ? 'on' : 'off');
+    st.textContent = rec.status;
+    card.appendChild(st);
+  }
+  var cols = document.createElement('div');
+  cols.className = 'card-cols';
+  function row(label, val){
+    return '<div class="field"><span class="f-label">' + label + '</span><span class="f-val">' + escTxt(val) + '</span></div>';
+  }
+  cols.innerHTML =
+    '<div class="card-col">' + row('中文名称：', rec.cn) + row('英文名称：', rec.en) + '</div>' +
+    '<div class="card-col">' + row('品类等级：', rec.level) + row('父级品类：', rec.parent) + '</div>' +
+    '<div class="card-col">' + row('创建人：', rec.creator) + row('创建日期：', rec.date) + '</div>';
+  card.appendChild(cols);
+  return card;
+}
+
+/* 渲染卡片区（含分页）：默认全部品级，每页 10 张 */
+function renderArea(){
+  var stack = document.getElementById('cardStack');
+  if(!stack) return;
+  var recs = recordsForList();
+  var total = recs.length;
+  var pages = Math.max(1, Math.ceil(total / pageSize));
+  if(currentPage > pages) currentPage = pages;
+  if(currentPage < 1) currentPage = 1;
+  stack.innerHTML = '';
+  if(!total){
+    var ecard = document.createElement('div');
+    ecard.className = 'detail-card';
+    var hint = document.createElement('div');
+    hint.className = 'empty-hint';
+    hint.textContent = '暂无数据';
+    ecard.appendChild(hint);
+    stack.appendChild(ecard);
+  } else {
+    recs.slice((currentPage - 1) * pageSize, currentPage * pageSize).forEach(function(r){ stack.appendChild(buildCard(r)); });
+  }
+  renderPagination(total, pages);
+  postHeight();
+}
+
+function renderPagination(total, pages){
+  var el = document.getElementById('pagination');
+  if(!el) return;
+  if(!total){ el.innerHTML = ''; return; }
+  var nums = '';
+  for(var i = 1; i <= pages; i++){
+    nums += '<span class="pg' + (i === currentPage ? ' active' : '') + '" onclick="goPage(' + i + ')">' + i + '</span>';
+  }
+  var opts = '';
+  [10, 20, 50, 100].forEach(function(n){
+    opts += '<option value="' + n + '"' + (n === pageSize ? ' selected' : '') + '>' + n + '条/页</option>';
+  });
+  el.innerHTML = '<div class="pag-left">共 <b>' + total + '</b> 条<select class="pag-select" onchange="setPageSize(this.value)">' + opts + '</select></div>' +
+    '<div class="pag-right"><div class="pag-nums"><span class="pg pg-arrow' + (currentPage <= 1 ? ' disabled' : '') + '" onclick="prevPage()">&lt;</span>' + nums +
+    '<span class="pg pg-arrow' + (currentPage >= pages ? ' disabled' : '') + '" onclick="nextPage()">&gt;</span></div> 前往<input class="pag-jump" type="text" value="' + currentPage + '" onkeydown="if(event.key===\'Enter\')jumpTo(this)" />页</div>';
+}
+function goPage(p){ p = parseInt(p, 10); if(isNaN(p)) return; currentPage = p; renderArea(); }
+function prevPage(){ if(currentPage > 1) goPage(currentPage - 1); }
+function nextPage(){ goPage(currentPage + 1); }
+function jumpTo(input){ goPage(input.value); }
+function setPageSize(v){ pageSize = parseInt(v, 10) || 10; currentPage = 1; renderArea(); }
 
 /* ========== 树渲染 ========== */
 function renderTree(items, container, level){
@@ -467,47 +611,7 @@ function findTreeNode(id, items){
 
 function escTxt(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-/* 渲染字段卡：点击项有下级 → 每个下级一张字段卡（展示全部）；叶子（如三级品类）→ 保留标题与卡片，卡片内删除字段/数据并显示“暂无数据” */
-function renderCards(id){
-  var stack = document.getElementById('cardStack');
-  if(!stack) return;
-  stack.innerHTML = '';
-  var node = id ? findTreeNode(id) : null;
-  if(!node) return;
-  var kids = (node.children && node.children.length) ? node.children : null;
-  if(!kids){
-    var ecard = document.createElement('div');
-    ecard.className = 'detail-card';
-    var hint = document.createElement('div');
-    hint.className = 'empty-hint';
-    hint.textContent = '暂无数据';
-    ecard.appendChild(hint);
-    stack.appendChild(ecard);
-    return;
-  }
-  kids.forEach(function(it){
-    var d = detailData[it.id] || {};
-    var card = document.createElement('div');
-    card.className = 'detail-card';
-    if(d.status){
-      var st = document.createElement('span');
-      st.className = 'row-status status-' + (d.status === '启用' ? 'on' : 'off');
-      st.textContent = d.status;
-      card.appendChild(st);
-    }
-    var cols = document.createElement('div');
-    cols.className = 'card-cols';
-    function row(label, val){
-      return '<div class="field"><span class="f-label">' + label + '</span><span class="f-val">' + escTxt(val) + '</span></div>';
-    }
-    cols.innerHTML =
-      '<div class="card-col">' + row('中文名称：', d.cn || '—') + row('英文名称：', d.en || '—') + '</div>' +
-      '<div class="card-col">' + row('品类等级：', d.level || '—') + row('父级品类：', d.parent || '—') + '</div>' +
-      '<div class="card-col">' + row('创建人：', d.creator || '—') + row('创建日期：', d.date || '—') + '</div>';
-    card.appendChild(cols);
-    stack.appendChild(card);
-  });
-}
+/* 旧的 renderCards 已由 renderArea（全部品级列表 + 分页）取代：见上方 recordsForList/buildCard/renderArea */
 
 function selectNode(id){
   // 高亮当前行
@@ -515,7 +619,8 @@ function selectNode(id){
   var row = document.querySelector('.tree-row[data-id="'+id+'"]');
   if(row) row.classList.add('active');
   currentId = id;
-  renderCards(id);
+  currentPage = 1;
+  renderArea();
 }
 
 /* ========== 树操作 ========== */
@@ -531,8 +636,9 @@ function resetTree(){
   document.getElementById('treeSearch').value = '';
   collapseAll();
   currentId = null;
+  currentPage = 1;
   document.querySelectorAll('.tree-row.active').forEach(function(r){ r.classList.remove('active'); });
-  renderCards(null);
+  renderArea();   /* 回到默认「全部品级」列表 */
 }
 function toggleTreeMenu(){
   document.getElementById('treeDropdown').classList.toggle('show');
@@ -561,6 +667,10 @@ function resetFilters(){
   document.getElementById('dtEndTime').value = '';
   closeDatePanel();
   closeTimePop(false, true);
+  /* 列表复位：等级筛选清空、回到第 1 页，并重渲默认「全部品级」列表 */
+  levelFilter = '';
+  currentPage = 1;
+  renderArea();
 }
 
 /* ========== 创建时间：日期范围面板（整框可点 / 粘连选择 / 时分秒 / 清空·确定） ========== */
@@ -745,6 +855,14 @@ document.querySelectorAll('.filter-bar .dd').forEach(function(dd){
       items.forEach(function(n){ n.classList.remove('active'); });
       this.classList.add('active');
       dd.classList.remove('open');
+      /* 品类等级下拉：驱动卡片区列表 —— 清空树选中，按等级过滤「全部品级」并回到第 1 页 */
+      if(dd.id === 'selLevel'){
+        levelFilter = this.dataset.v || '';
+        currentId = null;
+        currentPage = 1;
+        document.querySelectorAll('.tree-row.active').forEach(function(r){ r.classList.remove('active'); });
+        renderArea();
+      }
     });
   });
 });
@@ -768,6 +886,7 @@ document.addEventListener('DOMContentLoaded', function(){
   var body = document.getElementById('treeBody');
   renderTree(categoryData, body, 1);
   // 默认全折叠（renderTree 已不设 expanded）
+  renderArea();   /* 打开即展示全部品级品类卡片（每页 10 张，LC-OMS 分页） */
 });
 
 /* ========== iframe 高度上报（壳层要求）========== */
@@ -910,7 +1029,7 @@ window.addEventListener('resize', postHeight);
 (function(){
   var cfg = {
     title: '卡片区说明',
-    /* 区域 PRD 按实际内容取舍：本卡片区为只读字段卡，无操作按钮，故仅含 标题 + 状态说明。
+    /* 区域 PRD 按实际内容取舍：卡片区为只读字段卡（无行内操作按钮），另有底部「分页」控件。
        secs 里有什么就渲染什么，序号自动连续；此处结构即为「非固定三件套」的实现方式。 */
     secs: [
       { name: '标题', build: function(){
@@ -935,6 +1054,19 @@ window.addEventListener('resize', postHeight);
             ['创建人', '录入该品类的操作人账号'],
             ['创建日期', '创建/录入日期（yyyy-mm-dd HH:mm:ss）']
           ]}
+        ]
+      },
+      { name: '分页', build: function(){
+          var h = '<div class="prow prow2 head"><span>控件</span><span>说明</span></div>';
+          this.rows.forEach(function(r){ h += '<div class="prow prow2"><span>' + r[0] + '</span><span>' + r[1] + '</span></div>'; });
+          return h;
+        },
+        rows: [
+          ['列表范围', '默认展示全部品级（一级/二级/三级，共 30 条）的品类卡片；点选左侧品类树节点则切换为该节点的全部直接下级'],
+          ['共 N 条', '当前列表总条数（随所选节点 / 品类等级过滤变化）'],
+          ['每页条数', '下拉可选 10 / 20 / 50 / 100 条，默认 10 条/页（LC-OMS 默认），切换后回到第 1 页'],
+          ['页码', '数字页码 + 上一页 / 下一页（首末页箭头置灰），当前页主蓝高亮，整体靠右'],
+          ['前往 N 页', '输入页码回车直达该页']
         ]
       },
       { name: '状态说明', build: function(){
