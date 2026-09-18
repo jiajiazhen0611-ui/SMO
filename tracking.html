@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="Cache-Control" content="no-store, must-revalidate" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>物流轨迹</title>
+<style>
+  /* ============ LC-OMS 设计令牌（自包含，独立页面） ============ */
+  :root{
+    --primary:#1677ff;
+    --primary-hover:#4096ff;
+    --primary-active:#0958d9;
+    --primary-bg:rgba(22,119,255,0.06);
+    --primary-border:rgba(22,119,255,0.24);
+    --success:#52c41a;   --success-bg:rgba(82,196,26,0.06);
+    --warning:#faad14;   --warning-bg:rgba(250,173,20,0.08);
+    --danger:#ff4d4f;    --danger-bg:rgba(255,77,79,0.06);
+    --info:#1677ff;      --info-bg:rgba(22,119,255,0.04);
+    /* 参考图取色（多行文本框 / 查询按钮）：橙 255,140,0；左下角操作按钮 82,82,91 */
+    --query:#ff8c00;     --query-hover:#f07c00;   --query-active:#e07000;
+    --slate:#52525b;     --slate-hover:#3f3f46;
+    --bg:#f5f7fa;
+    --surface:#ffffff;
+    --border:#e5e6eb;
+    --border-light:#f0f0f0;
+    --text:#1d2129;
+    --text-secondary:#4e5969;
+    --text-tertiary:#86909c;
+    --text-quaternary:#c9cdd4;   /* 占位符专用，严禁 --text-secondary 冒充 */
+    --radius-sm:4px; --radius-md:6px; --radius-lg:8px;
+    --shadow-card:0 1px 2px rgba(0,0,0,.03),0 1px 6px -1px rgba(0,0,0,.02),0 2px 4px rgba(0,0,0,.02);
+    --shadow-dropdown:0 6px 16px rgba(0,0,0,.08),0 3px 6px -3px rgba(0,0,0,.12),0 -5px 12px rgba(0,0,0,.05);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Helvetica Neue',Helvetica,Arial,sans-serif;
+    font-size:14px; line-height:1.5715; color:var(--text);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);min-height:100vh;font-family:inherit;color:var(--text)}
+  button{font-family:inherit;cursor:pointer;border:1px solid transparent;background:none;color:inherit;font-size:14px}
+  input{font-family:inherit;font-size:14px;color:var(--text)}
+  ::selection{background:var(--primary-bg)}
+
+  /* ============ 顶部导航栏（本页自带，不依赖壳层） ============
+     参考图取色/规格：底 #fbfcff、分隔线 #e2e8f0、导航项文字近黑、**当前项 = 蓝色文字 + 底部 2px 蓝条**
+     （蓝条紧贴分隔线之上、宽度 ≈ 文字宽 + 左右各 4px）；二级项高亮时父级一级菜单同步亮起 */
+  .topbar{position:sticky;top:0;z-index:100;background:#fbfcff;border-bottom:1px solid #e2e8f0;height:56px}
+  .topbar-inner{max-width:1363px;margin:0 auto;width:100%;height:100%;padding:0 24px;display:flex;align-items:stretch}
+  .brand{display:flex;align-items:center;gap:10px;flex-shrink:0}
+  .brand-icon{width:30px;height:30px;border-radius:6px;background:linear-gradient(135deg,#1677ff 0%,#69b1ff 30%,#36cfc9 70%,#95de64 100%);display:grid;place-items:center}
+  .brand-icon svg{width:18px;height:18px}
+  .brand-text{display:flex;flex-direction:column;line-height:1.2}
+  .brand-title{font-size:15px;font-weight:600;color:var(--text)}
+  .brand-sub{font-size:11px;color:var(--text-tertiary);letter-spacing:.2px}
+  .topnav{display:flex;align-items:stretch;gap:4px;margin-left:14px}
+  .nav-dd{position:relative;display:flex;align-items:stretch}
+  /* 导航项占满 Header 高，蓝条才能贴在下边框上（否则会浮在 Header 中部） */
+  .nav-item{position:relative;display:inline-flex;align-items:center;padding:0 14px;height:100%;font-size:14px;color:var(--text);white-space:nowrap;transition:color .2s;cursor:pointer}
+  .nav-item:hover{color:var(--primary)}
+  .nav-item::after{content:'';position:absolute;left:10px;right:10px;bottom:0;height:2px;background:transparent;border-radius:1px;transition:background .2s}
+  .nav-item.active,.nav-dd.active > .nav-trigger{color:var(--primary);font-weight:500}
+  .nav-item.active::after,.nav-dd.active > .nav-trigger::after{background:var(--primary)}
+  .nav-trigger{display:inline-flex;align-items:center;gap:4px}
+  .nav-menu{position:absolute;top:100%;left:0;min-width:140px;background:#fff;border:1px solid var(--border-light);border-radius:var(--radius-md);box-shadow:var(--shadow-dropdown);padding:6px;display:none;z-index:200}
+  .nav-dd:hover .nav-menu{display:block}
+  .nav-sub{display:block;padding:8px 14px;font-size:14px;color:var(--text-secondary);border-radius:var(--radius-md);white-space:nowrap;transition:color .2s,background .2s;cursor:pointer}
+  .nav-sub:hover{color:var(--primary);background:var(--bg)}
+  .nav-sub.active{color:var(--primary);font-weight:500;background:var(--bg)}
+  /* 右侧：通知 + 用户信息 */
+  .topbar-right{margin-left:auto;display:flex;align-items:center;gap:16px}
+  .icon-btn{position:relative;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:var(--text-secondary);background:none;border:none;cursor:pointer;transition:color .2s,background .2s}
+  .icon-btn:hover{color:var(--primary);background:var(--primary-bg)}
+  .icon-btn svg{width:18px;height:18px}
+  .icon-btn .dot{position:absolute;top:4px;right:4px;width:8px;height:8px;border-radius:50%;background:var(--danger);border:2px solid #fbfcff}
+  .user-info{display:flex;align-items:center;gap:6px;padding:4px 8px;border-radius:var(--radius-md);cursor:pointer;font-size:13.5px;color:var(--text-secondary);transition:background .2s}
+  .user-info:hover{background:var(--bg)}
+  .user-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#1677ff,#69b1ff);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:600}
+  .user-name{max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  @media (max-width:900px){.topbar-inner{padding:0 16px}.topnav{margin-left:8px}}
+
+  /* ============ 内容区（居中 1268px，与导航栏内容对齐） ============ */
+  .page{max-width:1363px;margin:0 auto;width:100%;padding:16px 24px 32px}
+
+  /* ============================================================
+     两列布局：左列 = 筛选控件（多行文本框 + 时间维度下拉 + 日期范围 + 查询）
+             右列 = 列表卡片（表格卡片式行 + 分页）
+     左列 368px（2026-09-17 先加宽到 400 保证日期时分秒完整显示，后用户要求收窄一点、靠收紧箭头间距补偿；368 比 400 收 32px 且日期段余量仍约 11px 不溢出）；右列 = 整页内容宽 - 368 - 16(gap)
+     整页 max-width 1363（内容 1315 = 368 + 16 + 931，实际表格 min-width 918，页面被滚动条限制到约 1350 时右列仍 = 918 不滚动）；最新轨迹列加宽到 267px 以容纳「轨迹时间」label+值同行
+     ============================================================ */
+  .layout{display:flex;align-items:flex-start;gap:16px}
+  .side-col{flex:0 0 368px;width:368px;display:flex;flex-direction:column;gap:12px}
+  /* 宽度铁律：左列四个控件严格同宽（随左列列宽） */
+  .side-col .ta-box,.side-col .dc-select,.side-col .date-combo{width:100%}
+
+  /* 左列面板容器：对齐参考（运单追踪三分栏版）—— 白卡 + 标题「批量查询」+ 右标「每行一条」 */
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-card)}
+  .panel-bd{padding:16px}
+  /* 三个带标签的筛选项块（参考同款） */
+  .side-block + .side-block{margin-top:14px}
+  .side-label{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-secondary);margin-bottom:6px}
+
+  /* ---------- ① 跟踪号：多行文本框（分行 + 自动编号 + 行间阴影带 + 左下角一键删除） ----------
+     结构 .ta-box（边框/聚焦）> .ta-scroll（限高 5 行，超出内部滚动）> .ta-body（行带底纹 + 编号列 + textarea）
+     参考图取色/尺寸：行高 28px、行带 #fff/#fafafa 交替（即"换行阴影"）、聚焦边框 2px #ff8c00、
+     左下角按钮 32×32 #52525b（仅保留"一键删除"，其余按钮不放） ------------------------------- */
+  .ta-box{position:relative;width:100%;background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);transition:border-color .2s,box-shadow .2s}
+  .ta-box:focus-within{border-color:var(--query);box-shadow:0 0 0 1px var(--query)}   /* 聚焦 = 2px 橙色边框（参考图） */
+  /* 限高铁律：框高固定 = 5 行 × 行高 28px = 140px（用户指定"正好五个单号"）；
+     编号只标实际行数（空态只有 1.），第 6 行起在框内滚动 */
+  .ta-scroll{height:140px;overflow-y:auto;overflow-x:hidden;border-radius:var(--radius-lg) var(--radius-lg) 0 0;scrollbar-width:thin}
+  .ta-scroll::-webkit-scrollbar{width:6px}
+  .ta-scroll::-webkit-scrollbar-thumb{background:#8b8b8b;border-radius:3px}
+  /* 行带底纹：白 / #fafafa 每 28px 交替一次（"换行有阴影"）；
+     必须挂在内层 .ta-body 上（而不是滚动容器上），否则底纹不会随内容滚动；
+     min-height 保证编号只有 1 行时底纹也铺满 5 行高度 */
+  .ta-body{position:relative;display:flex;min-height:140px;background-image:repeating-linear-gradient(to bottom,#fff 0 28px,#fafafa 28px 56px)}
+  /* 编号列：自动标记 1. 2. 3. …，行高与 textarea 严格一致（28px）保证逐行对齐 */
+  .ta-gutter{flex:0 0 28px;padding-left:8px;font-size:13.5px;line-height:28px;color:var(--text);user-select:none}
+  .ta-idx{display:block;height:28px;line-height:28px;white-space:nowrap}
+  /* 行内清除按钮：每行右侧一个 ×（仅非空行显示），点击删除该行；
+     覆盖层 .ta-rowdel-layer 仅做定位（pointer-events:none），按钮自身恢复可点；
+     行高 26px + top 偏移 1px：上下各留 1px，避免压住 textarea 的横向滚动条 */
+  .ta-rowdel-layer{position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:2}
+  .ta-rowdel{position:absolute;right:2px;width:22px;height:26px;display:none;place-items:center;padding:0;border:none;border-radius:var(--radius-sm);background:none;color:var(--text-tertiary);pointer-events:auto;transition:color .15s,background .15s}
+  .ta-rowdel.on{display:grid}
+  .ta-rowdel:hover{color:var(--danger);background:var(--danger-bg)}
+  .ta-rowdel:active{color:#d9363e}
+  .ta-rowdel svg{width:11px;height:11px;display:block}
+  /* 正文：wrap=off —— 一行永远只占一行，编号列才不会与折行错位 */
+  .f-textarea{flex:1;min-width:0;width:100%;border:none;background:transparent;padding:0 26px 0 4px;font-size:13.5px;line-height:28px;font-family:inherit;color:var(--text);resize:none;outline:none;white-space:pre;overflow-x:auto;overflow-y:hidden}
+  /* 【铁律】提示词浅灰 rgb(201,205,212) / 13.5px，严禁黑色或 --text-secondary 冒充 */
+  .f-textarea::placeholder{color:var(--text-quaternary);font-size:13.5px}
+  .f-textarea::-webkit-scrollbar{height:5px}
+  .f-textarea::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+  /* 左下角操作区：仅「一键删除」；右侧放超限提示（最多 20 个单号） */
+  .ta-foot{display:flex;align-items:center;height:44px;padding:0 8px}
+  .ta-tip{margin-left:auto;padding-right:4px;font-size:12px;color:var(--danger);opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap}
+  .ta-tip.show{opacity:1}
+  .ta-del{width:32px;height:32px;border:none;border-radius:var(--radius-md);background:var(--slate);color:#fff;display:grid;place-items:center;padding:0;transition:background .15s}
+  .ta-del:hover{background:var(--slate-hover)}
+  .ta-del svg{width:16px;height:16px;display:block}
+
+  /* ---------- 自定义下拉 .dd（三角必须是真实内联 SVG；原生 select 方案已废弃） ---------- */
+  .dd-arrow{display:grid;place-items:center;color:#4e5969;transition:transform .15s,color .15s;flex-shrink:0}   /* #4e5969 清晰可见，禁用 #86909c 过浅值 */
+  .dd-arrow svg{width:12px;height:12px;display:block}
+  .dd-list{position:absolute;top:calc(100% + 4px);left:0;min-width:100%;background:#fff;border:1px solid var(--border-light);border-radius:var(--radius-md);box-shadow:var(--shadow-dropdown);z-index:310;display:none;overflow:hidden;padding:4px 0}
+  .dd.open .dd-list{display:block}   /* 通用：任何 .dd 展开即显示列表（筛选区 + 分页共用） */
+  .dd-item{padding:7px 14px;font-size:13.5px;color:var(--text);cursor:pointer;white-space:nowrap;transition:background .15s}
+  .dd-item:hover{background:var(--bg)}
+  .dd-item.active{color:var(--primary);background:var(--primary-bg)}
+
+  /* ---------- ② 时间维度（换行：维度下拉独占一个 side-block、日期范围独占另一个 side-block） ---------- */
+  .date-combo{position:relative;display:block;width:100%}
+  .dc-select{position:relative;display:inline-flex;align-items:center;justify-content:space-between;gap:6px;height:32px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius-md);width:100%;background:#fff;cursor:pointer;user-select:none;font-size:13.5px;color:var(--text)}
+  .dc-select .dd-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}
+  .dc-select .dd-arrow{color:#4e5969}
+  .dc-select.dd.open{border-color:var(--primary)}
+  .dc-select.dd.open .dd-arrow{transform:rotate(180deg);color:var(--primary)}   /* 展开变向上蓝三角 */
+  /* 日期范围：独占第二行，四角完整圆角；左列 368px 下整行约 336px 可用，两段各约 148px ——
+     收紧箭头间距（gap:0 + 箭头 margin:0 3px）把内部空间还给日期文本，仍完整显示 19 字符日期
+     （如 2026-09-01 00:00:00，实测约 133px），时分秒不截断（余量 ~11px），title 悬停看全值仍保留作兜底 */
+  .dc-range{display:flex;align-items:center;gap:0;height:32px;border:1px solid var(--border);border-radius:var(--radius-md);width:100%;background:#fff;padding:0 8px;cursor:pointer;transition:border-color .2s,box-shadow .2s}
+  .date-combo.open .dc-range,.dc-range:focus-within{border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-bg)}
+  .dc-seg{flex:1 1 0;min-width:0;border:none;outline:none;background:transparent;font-size:13.5px;color:var(--text);padding:0 2px;text-align:center;cursor:pointer;overflow:hidden;text-overflow:ellipsis}
+  .dc-seg::placeholder{color:var(--text-quaternary);font-size:13.5px}
+  .dc-arrow{color:var(--text-tertiary);font-size:11px;flex-shrink:0;user-select:none;margin:0 3px}
+  .dc-cal{width:12px;height:12px;color:var(--text-tertiary);flex-shrink:0;display:grid;place-items:center}
+  .dc-cal svg{width:12px;height:12px}
+
+  /* ---------- ③ 日期范围选择器（Element 风格） ---------- */
+  /* 【铁律】面板必须 absolute 覆盖层 —— 严禁 position:relative（入文档流会撑宽组合框并推开下方内容产生大空白） */
+  .date-panel{position:absolute;top:calc(100% + 4px);left:0;z-index:300;background:#fff;border:1px solid var(--border-light);border-radius:var(--radius-lg);box-shadow:var(--shadow-dropdown);display:none;padding:12px 14px;min-width:480px}
+  .date-panel.open{display:block}
+  /* 顶部时间行：必须 nowrap，防止四框 + › 箭头换行。
+     【LC-OMS 面板宽度铁律】四框必须 flex:1 1 0 + width:0 —— 只吃分摊宽度、不参与面板"首选宽度"计算，
+     否则 input 原生宽度(~149px)×4 会把面板撑到 654px，而双月日历只有 484px，
+     表现为「结束时间输入框完全超出日历范围」。改成 width:0 后：面板 = 484(日历) + 28(内边距) = 512px，
+     时间行右缘 = 日历右缘 = 面板内容右缘，四框各 ~112px（足够显示 2026-09-10 / 00:00:00）。 */
+  .dp-times{display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:nowrap}
+  .dpt-date{flex:1 1 0;width:0;min-width:0;height:30px;border:1px solid var(--border);border-radius:var(--radius-sm);text-align:center;font-size:13px;color:var(--text);background:#fff;outline:none}
+  .dpt-time{flex:1 1 0;width:0;min-width:0;height:30px;border:1px solid var(--border);border-radius:var(--radius-sm);text-align:center;font-size:13px;color:var(--text);background:#fff;outline:none;cursor:pointer}
+  .dpt-time::placeholder{color:var(--text-quaternary)}
+  .dpt-time:focus,.dpt-time:hover{border-color:var(--primary)}
+  .dpt-arrow{color:var(--text-tertiary);flex-shrink:0}
+  .dp-body{display:flex;gap:20px}
+  .dp-foot{display:flex;justify-content:flex-end;align-items:center;gap:12px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border-light)}
+  .dp-btn-clear{border:none;background:none;color:var(--primary);font-size:13px;cursor:pointer;padding:4px 6px}
+  .dp-btn-clear:hover{color:var(--primary-hover)}
+  .dp-btn-ok{height:28px;padding:0 18px;background:var(--primary);color:#fff;border:1px solid var(--primary);border-radius:var(--radius-md);font-size:13px;cursor:pointer;transition:background .2s}
+  .dp-btn-ok:hover{background:var(--primary-hover);border-color:var(--primary-hover)}
+  /* 双月日历：粘连选择（hover 预览区间），点「确定」才写入并关闭 */
+  .dp-month{min-width:232px}
+  .dp-title{display:flex;align-items:center;justify-content:space-between;font-size:13.5px;font-weight:600;color:var(--text);padding-bottom:8px}
+  .dp-title button{border:none;background:transparent;cursor:pointer;color:var(--text-tertiary);width:22px;height:22px;border-radius:4px;display:grid;place-items:center;padding:0;font-size:14px}
+  .dp-title button:hover{background:var(--bg);color:var(--text)}
+  .dp-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;font-size:12.5px;text-align:center}
+  .dp-wk{color:var(--text-tertiary);padding:4px 0}
+  .dp-day{height:26px;line-height:26px;border-radius:4px;cursor:pointer;color:var(--text)}
+  .dp-day:hover{background:var(--bg)}
+  .dp-day.dim{color:var(--text-quaternary);pointer-events:none}
+  .dp-day.in-range{background:var(--primary-bg);border-radius:0}
+  .dp-day.start,.dp-day.end{background:var(--primary);color:#fff}
+  /* 时间滚动选择（Element 风格）：选中项加粗黑字 + 浅灰底带（非蓝底白字），取消/确定横排右下 */
+  .time-pop{position:absolute;z-index:320;background:#fff;border:1px solid var(--border-light);border-radius:var(--radius-md);box-shadow:var(--shadow-dropdown);padding:10px;display:none;flex-direction:column;gap:8px}
+  .time-pop.open{display:flex}
+  .tp-body{display:flex;gap:4px}
+  .tp-col{width:48px;height:182px;overflow-y:auto;border-radius:4px;scrollbar-width:thin}
+  .tp-col::-webkit-scrollbar{width:4px}
+  .tp-col::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+  .tp-item{height:26px;line-height:26px;text-align:center;font-size:13px;cursor:pointer;color:var(--text);border-radius:4px}
+  .tp-item:hover{background:var(--bg)}
+  .tp-item.sel{font-weight:600;color:var(--text);background:var(--bg)}
+  .tp-foot{display:flex;justify-content:flex-end;align-items:center;gap:8px}
+  .tp-btn-cancel{height:26px;padding:0 10px;background:#fff;color:var(--text-secondary);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;cursor:pointer;white-space:nowrap}
+  .tp-btn-ok{height:26px;padding:0 10px;background:var(--primary);color:#fff;border:1px solid var(--primary);border-radius:var(--radius-sm);font-size:12px;cursor:pointer;white-space:nowrap}
+
+  /* ---------- ⑤ 查询按钮（替代原「重置」）：蓝色实底 + 图标 + 数量，与上方两个控件同宽 ---------- */
+  .btn-query{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:36px;margin-top:16px;background:var(--primary);color:#fff;border:1px solid var(--primary);border-radius:var(--radius-lg);font-size:15px;cursor:pointer;transition:background .2s,border-color .2s;white-space:nowrap}
+  .btn-query:hover{background:var(--primary-hover);border-color:var(--primary-hover)}
+  .btn-query:active{background:var(--primary-active);border-color:var(--primary-active)}
+  .btn-query svg{width:18px;height:18px;display:block;flex-shrink:0}
+  .btn-query .q-count{opacity:.92}
+
+  /* ============ 表格卡片式行 ============ */
+  /* 外层不得设 background:#fff（否则行间透明缝隙显白）；flex:1 吃掉右列剩余宽度 */
+  .table-panel{flex:1;min-width:0;background:transparent;border-radius:var(--radius-lg);border:none;box-shadow:none;overflow:visible}
+  .table-wrap{overflow-x:auto;background:transparent}
+  /* 列宽铁律：表格设 min-width，窗口变窄时横向滚动而**不压缩列宽**（避免内容被挤成多行）
+     四列写死像素（含「最新轨迹」列）；min-width = 233+267+180+238 = 918，低于此值容器横向滚动。
+     三列固定值 = headless 实测「不折行所需宽度」+ 余量：单号信息 233 / 位置信息 180 / 操作记录 238；
+     「最新轨迹」列 267px = 容纳 label(轨迹时间：5em≈62.5) + 25 字符带时区时间(实测≈151) 同行不换行所需 */
+  table{width:100%;min-width:918px;border-collapse:separate;border-spacing:0;table-layout:fixed;background:transparent}
+  /* 【LC-OMS 铁律】表头 = #fafbfc / 13px / 500 / text-secondary / 无边框 */
+  thead th{background:#fafbfc;padding:12px 16px;text-align:left;font-size:13px;font-weight:500;color:var(--text-secondary);white-space:nowrap;border:none}
+  /* 每行独立白卡 + 18px 透明缝隙透出页面 #f5f7fa 背景 */
+  tbody tr.row-main td{background:#fff;border-top:1px solid var(--border-light);border-bottom:1px solid var(--border-light);padding:14px 16px;font-size:13.5px;color:var(--text);vertical-align:middle}
+  tbody tr.row-main td:first-child{border-left:1px solid var(--border-light);border-bottom-left-radius:var(--radius-md);border-top-left-radius:var(--radius-md)}
+  /* 末列＝操作记录：右内边距 44px 给卡片右缘的展开按钮让位（按钮 right14 + 宽26 + 余量4） */
+  tbody tr.row-main td:last-child{border-right:1px solid var(--border-light);border-bottom-right-radius:var(--radius-md);border-top-right-radius:var(--radius-md);position:relative;overflow:visible;padding-right:44px}
+  /* 展开按钮：蓝色双向箭头，贴卡片右缘垂直居中（已替代原「操作」列里的「详情」文字链） */
+  .row-expand{position:absolute;right:14px;top:50%;transform:translateY(-50%);width:26px;height:26px;display:grid;place-items:center;border:none;border-radius:var(--radius-sm);background:none;color:var(--primary);cursor:pointer;padding:0;transition:background .15s}
+  .row-expand:hover{background:var(--primary-bg)}
+  .row-expand svg{width:20px;height:20px;display:block;transition:transform .2s}
+  tbody tr.row-main.open .row-expand svg{transform:rotate(180deg)}   /* 展开态箭头翻转（朝内）＝可收起 */
+  /* 展开态：主行卡片下缘去圆角、去下边框，与下方详情条无缝拼成一张卡 */
+  tbody tr.row-main.open td{border-bottom:none;border-bottom-left-radius:0;border-bottom-right-radius:0}
+  /* 详情条（原弹窗内容改为行内展开）：浅灰底，接在主行卡片正下方，左右下缘圆角收口 */
+  tbody tr.row-detail td{background:#fafbfc;border-left:1px solid var(--border-light);border-right:1px solid var(--border-light);border-bottom:1px solid var(--border-light);border-bottom-left-radius:var(--radius-md);border-bottom-right-radius:var(--radius-md);padding:0}
+  tbody tr.row-detail.hide{display:none}
+  tbody tr.gap td{height:18px;padding:0;border:none;background:transparent;font-size:0;line-height:0}
+  /* 查询无结果时的空态（查询按钮出现后必须有） */
+  tbody tr.row-empty td{background:#fff;border:1px solid var(--border-light);border-radius:var(--radius-md);text-align:center;color:var(--text-tertiary);font-size:13.5px;padding:40px 16px}
+
+  /* ============ 字段冒号对齐（LC-OMS 第六节铁律） ============ */
+  .field{display:flex;align-items:baseline;line-height:1.9;font-size:12.5px;color:var(--text-tertiary)}
+  .field .f-label{flex:0 0 5em;text-align:right;white-space:nowrap;color:var(--text-tertiary)}
+  .field .f-val{flex:1;min-width:0;color:var(--text-tertiary);word-break:break-all}
+  /* 轨迹：单行截断（超出显示 …），悬停用暗色 tooltip 全显 */
+  .field .f-val.ellip{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;word-break:normal;padding-right:2px}
+  /* 最新轨迹列「轨迹时间」：label 与值同一行（用户要求），值 nowrap 不换行；列宽已加宽到 280px 容纳 25 字符带时区时间 */
+  .field.track-time .f-label{flex:0 0 5em}
+  .field.track-time .f-val{white-space:nowrap;flex:1;min-width:0;overflow:visible;word-break:normal}
+  /* 悬停 tooltip：Ant Design 风暗色气泡；position:fixed 脱离 .table-wrap 的 overflow-x 裁剪 */
+  .tip-box{position:fixed;left:0;top:0;z-index:900;max-width:380px;background:rgba(0,0,0,.86);color:#fff;font-size:12.5px;line-height:1.65;padding:8px 12px;border-radius:6px;pointer-events:none;display:none;word-break:break-word;box-shadow:0 6px 16px rgba(0,0,0,.18)}
+  .tip-box.show{display:block}
+  /* 小三角：固定在气泡水平正中；气泡在元素上方朝下、翻到元素下方朝上 */
+  .tip-box::after{content:'';position:absolute;left:50%;margin-left:-6px;width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent}
+  .tip-box.above::after{bottom:-5px;border-top:6px solid rgba(0,0,0,.86)}
+  .tip-box.below::after{top:-5px;border-bottom:6px solid rgba(0,0,0,.86)}
+  .tip-line + .tip-line{margin-top:2px}
+  /* 各列标签宽度 = 该列最长字段名（含冒号，CJK + 全角冒号 ≈ 1em/字）： */
+  tbody tr.row-main td:nth-child(1) .f-label{flex-basis:6em}  /* 客户订单号：=6字 */
+  tbody tr.row-main td:nth-child(2) .f-label{flex-basis:5em}  /* 轨迹时间：=5字 */
+  tbody tr.row-main td:nth-child(3) .f-label{flex-basis:3em}  /* 地区：邮编：=3字 */
+  tbody tr.row-main td:nth-child(4) .f-label{flex-basis:5em}  /* 创建时间：=5字 */
+
+  /* ============ 分页（LC-OMS 第五节：整体靠右 justify-content:flex-end，非两端分散） ============ */
+  .pagination{display:flex;align-items:center;justify-content:flex-end;padding:12px 20px;border-top:1px solid var(--border-light);font-size:13px;color:var(--text-secondary);position:sticky;bottom:0;z-index:10;background:var(--bg)}
+  .pag-left{display:flex;align-items:center;gap:12px}
+  .pag-left b{color:var(--text);font-weight:600;margin:0 3px}
+  /* 每页条数下拉：小尺寸 .dd 变体，向上展开（分页条在页面底部，向下会溢出视口） */
+  .pag-dd{position:relative;display:inline-flex;align-items:center;justify-content:space-between;gap:6px;height:28px;padding:0 8px 0 10px;margin:0 4px;border:1px solid var(--border);border-radius:var(--radius-sm);background:#fff;cursor:pointer;user-select:none;font-size:13px;color:var(--text);min-width:92px;transition:border-color .2s,color .2s}
+  .pag-dd:hover{border-color:var(--primary)}
+  .pag-dd.open{border-color:var(--primary)}
+  .pag-dd.open .dd-arrow{transform:rotate(180deg);color:var(--primary)}
+  .pag-dd .dd-list{top:auto;bottom:calc(100% + 6px)}
+  .pag-dd .dd-item{padding:6px 12px;font-size:13px}
+  .pag-nums{display:flex;align-items:center;gap:4px}
+  .pg{min-width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;border-radius:var(--radius-sm);font-size:13px;cursor:pointer;transition:all .2s;border:1px solid transparent;color:var(--text)}
+  .pg:hover{color:var(--primary);border-color:var(--primary-border)}
+  .pg.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .pg.disabled{color:var(--text-quaternary);cursor:not-allowed}
+  .pg.disabled:hover{color:var(--text-quaternary);border-color:transparent}   /* 禁用态不响应 hover 变蓝 */
+  .pg-arrow{font-size:12px}
+  .pag-right{display:flex;align-items:center;gap:8px;margin-left:16px}
+  .pag-jump{width:48px;height:28px;border:1px solid var(--border);border-radius:var(--radius-sm);text-align:center;font-size:13px;outline:none;color:var(--text)}
+  .pag-jump:focus{border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-bg)}
+
+  /* ============ 行内展开详情（原「详情弹窗」内容改为行内向下展开，不再是弹窗） ============ */
+  .dt-wrap{padding:12px 20px 14px}
+
+  /* 阶段进度条：已走过的节点蓝点+蓝线，未到达的灰点+灰线 */
+  .ship-steps{display:flex;padding:2px 0 10px}
+  .step{flex:1;min-width:0;position:relative;text-align:center}
+  .step::before,.step::after{content:'';position:absolute;top:5px;height:2px;background:var(--border)}
+  .step::before{left:0;width:50%}
+  .step::after{right:0;width:50%}
+  .step:first-child::before,.step:last-child::after{display:none}
+  .step.l-blue::before,.step.r-blue::after{background:var(--primary)}
+  .step .dot{display:block;box-sizing:border-box;width:12px;height:12px;margin:0 auto;border-radius:50%;background:#fff;border:2px solid var(--border);position:relative;z-index:1}
+  .step.done .dot{background:var(--primary);border-color:var(--primary)}
+  .step-name{font-size:12.5px;color:var(--text-tertiary);margin-top:6px;line-height:1.5}
+  .step.done .step-name{color:var(--text);font-weight:500}
+  .step-time{font-size:12px;color:var(--text-quaternary);margin-top:2px;line-height:1.5}
+
+  /* 分隔线 + 完整轨迹列表：每行「时间 + 轨迹」两行，最新在最上 */
+  .ship-sep{height:1px;background:#e9ecf0;margin:2px 0 4px}
+  .ship-list{padding:0}
+  .hist{padding:7px 0}
+  .hist-time{font-size:12.5px;color:var(--text-tertiary);line-height:1.7}
+  .hist-text{font-size:12.5px;color:var(--text);line-height:1.7;word-break:break-word}
+
+  @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:0!important;transition-duration:0!important}}
+
+</style>
+</head>
+<body>
+
+<!-- ============ 顶部导航栏（本页自带）：当前页 = 运单管理 › 运单追踪 ============ -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <span class="brand-icon"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="8" height="8" rx="2" fill="#fff" fill-opacity=".9"/><rect x="13" y="3" width="8" height="8" rx="2" fill="#fff" fill-opacity=".7"/><rect x="3" y="13" width="8" height="8" rx="2" fill="#fff" fill-opacity=".6"/><rect x="13" y="13" width="8" height="8" rx="2" fill="#fff" fill-opacity=".4"/></svg></span>
+      <span class="brand-text"><span class="brand-title">客户中台</span><span class="brand-sub">Customer Center</span></span>
+    </div>
+    <nav class="topnav">
+      <a class="nav-item" href="#">首页</a>
+      <div class="nav-dd active">
+        <span class="nav-item nav-trigger">运单管理 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></span>
+        <div class="nav-menu">
+          <a class="nav-sub active" href="#">运单追踪</a>
+        </div>
+      </div>
+    </nav>
+    <div class="topbar-right">
+      <button type="button" class="icon-btn" aria-label="通知">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span class="dot"></span>
+      </button>
+      <div class="user-info">
+        <span class="user-avatar">支</span>
+        <span class="user-name">support...</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="page">
+
+  <!-- ============ 左列：筛选控件（宽度严格一致）| 右列：列表卡片 ============ -->
+  <div class="layout">
+  <div class="side-col">
+    <div class="panel">
+      <div class="panel-bd">
+
+        <!-- ① 跟踪号 / 订单号：多行文本框（框高固定 5 行；编号随内容增长，空态只标 1.；
+             每行右侧一个 × 清除按钮（仅非空行显示，点击删除该行）；左下角一键删除；每行一个单号，最多 20 个） -->
+        <div class="side-block">
+          <div class="side-label">跟踪号 / 订单号</div>
+          <div class="ta-box">
+            <div class="ta-scroll">
+              <div class="ta-body">
+                <div class="ta-gutter" id="taGutter"></div>
+                <textarea class="f-textarea" id="fTrackingNo" rows="5" wrap="off" spellcheck="false" placeholder="每行输入一个单号，最多只允许提交20个单号" oninput="onTaInput()"></textarea>
+                <!-- 每行右侧的 × 清除按钮覆盖层（由 renderTaGutter() 按行生成，仅非空行显示） -->
+                <div class="ta-rowdel-layer" id="taRowDel"></div>
+              </div>
+            </div>
+            <div class="ta-foot">
+              <button type="button" class="ta-del" aria-label="一键删除" title="一键删除" onclick="clearTrackingAll()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.6 6.4h16.8"/><path d="M8.6 6.4V4.5c0-.6.5-1.1 1.1-1.1h4.6c.6 0 1.1.5 1.1 1.1v1.9"/><path d="M5.9 6.4 6.9 20a1.4 1.4 0 0 0 1.4 1.3h7.4A1.4 1.4 0 0 0 17.1 20l1-13.6"/><path d="M10.4 10.2v7M13.6 10.2v7"/></svg></button>
+              <span class="ta-tip" id="taTip">最多只允许提交20个单号</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ② 时间维度（独立块，默认 创建时间，可切 轨迹时间） -->
+        <div class="side-block">
+          <div class="side-label">时间维度</div>
+          <div class="dc-select dd has-value" id="dcType" data-placeholder="创建时间">
+            <span class="dd-label">创建时间</span>
+            <span class="dd-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+            <div class="dd-list">
+              <div class="dd-item active" data-v="创建时间">创建时间</div>
+              <div class="dd-item" data-v="轨迹时间">轨迹时间</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ③ 日期范围（独立块，默认空 = 不限） -->
+        <div class="side-block">
+          <div class="side-label">日期范围</div>
+          <div class="date-combo" id="dateCombo">
+            <div class="dc-range" id="dcRange" onclick="toggleDatePanel(event)" title="点击选择日期范围">
+              <input class="dc-seg" id="drStart" placeholder="开始日期" readonly />
+              <span class="dc-arrow">→</span>
+              <input class="dc-seg" id="drEnd" placeholder="结束日期" readonly />
+              <span class="dc-cal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
+            </div>
+            <!-- 日期范围面板：顶部时间行 + 左右双月日历 + 右下 清空/确定 -->
+            <div class="date-panel" id="datePanel" onclick="event.stopPropagation()">
+              <div class="dp-times">
+                <input class="dpt-date" id="dtStartDate" readonly placeholder="开始日期" />
+                <input class="dpt-time" id="dtStartTime" readonly placeholder="开始时间" onclick="openTimePop(this)" />
+                <span class="dpt-arrow">›</span>
+                <input class="dpt-date" id="dtEndDate" readonly placeholder="结束日期" />
+                <input class="dpt-time" id="dtEndTime" readonly placeholder="结束时间" onclick="openTimePop(this)" />
+              </div>
+              <div class="dp-body" id="dpBody">
+                <div class="dp-month">
+                  <div class="dp-title"><button type="button" onclick="dpNav(-1)">‹</button><span id="dpLeftTitle"></span><button type="button" style="visibility:hidden">‹</button></div>
+                  <div class="dp-grid" id="dpLeftGrid"></div>
+                </div>
+                <div class="dp-month">
+                  <div class="dp-title"><button type="button" style="visibility:hidden">‹</button><span id="dpRightTitle"></span><button type="button" onclick="dpNav(1)">›</button></div>
+                  <div class="dp-grid" id="dpRightGrid"></div>
+                </div>
+              </div>
+              <div class="dp-foot">
+                <button type="button" class="dp-btn-clear" onclick="dpClear()">清空</button>
+                <button type="button" class="dp-btn-ok" onclick="dpConfirm()">确定</button>
+              </div>
+              <!-- 时间滚动选择：时/分/秒 三列 + 取消/确定 -->
+              <div class="time-pop" id="timePop">
+                <div class="tp-body">
+                  <div class="tp-col" id="tpH"></div>
+                  <div class="tp-col" id="tpM"></div>
+                  <div class="tp-col" id="tpS"></div>
+                </div>
+                <div class="tp-foot">
+                  <button type="button" class="tp-btn-cancel" onclick="closeTimePop(false)">取消</button>
+                  <button type="button" class="tp-btn-ok" onclick="closeTimePop(true)">确定</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ④ 查询：蓝色主按钮，括号内 = 当前有效跟踪号条数 -->
+        <button type="button" class="btn-query" onclick="doQuery()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2.6 2.6 6.9v8.2L11 19.3l8.4-4.2V6.9z"/><path d="M2.6 6.9 11 11.1l8.4-4.2M11 11.1v8.2"/><circle cx="17.9" cy="17.6" r="3.3"/><path d="m20.3 20 1.8 1.8"/></svg>
+          <span>查询（<span class="q-count" id="qCount">0</span>）</span>
+        </button>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 右列：列表卡片（表格卡片式行 + 分页） ============ -->
+  <div class="table-panel">
+    <div class="table-wrap">
+      <table>
+        <colgroup>
+          <!-- 列宽策略：四列均写死像素（12.5px 正文实测「不折行所需宽度」+ 余量）；min-width 918 见上方说明。
+               最新轨迹列 267px 让「轨迹时间」label 与值同行不换行（含时区 25 字符） -->
+          <col style="width:233px" />
+          <col style="width:267px"/>
+          <col style="width:180px" />
+          <col style="width:238px" />
+        </colgroup>
+        <thead>
+          <tr>
+            <th>单号信息</th>
+            <th>最新轨迹</th>
+            <th>位置信息</th>
+            <th>操作记录</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <!-- 分页（LC-OMS：整体靠右，非两端分散） -->
+    <div class="pagination" id="pagination"></div>
+  </div>
+
+  </div><!-- /layout -->
+
+</div>
+
+<!-- 轨迹字段悬停全显气泡（body 级 + fixed 定位，不受表格容器裁剪） -->
+<div class="tip-box" id="tipBox"></div>
+
+<script>
+/* 轨迹阶段：固定 6 段（行内展开详情顶部进度条用） */
+var STAGES = ['已预报', '已上网', '在途', '到达待取', '投递失败', '已妥投'];
+
+/* ==========================================================================
+   列表数据（示例，原型用）
+   ========================================================================== */
+var ROWS = [
+  {
+    orderNo: 'CO-20260910-00128',
+    trackingNo: '875348197903',
+    trackTime: '2026-09-10 08:23:15 UTC-8',
+    track: 'Delivered — left at front door, no signature required, Chino, CA 91752, United States',
+    region: 'US, CA, Chino', zip: '91752',
+    createTime: '2026-09-08 14:22:31',
+    steps: {
+      '已预报': '2026-09-08 14:22:31', '已上网': '2026-09-08 20:05:10', '在途': '2026-09-09 03:41:22',
+      '到达待取': '2026-09-10 06:12:40', '已妥投': '2026-09-10 08:23:15'
+    },
+    history: [
+      ['2026-09-10 08:23:15', 'Delivered — left at front door, no signature required, Chino, CA 91752, United States'],
+      ['2026-09-10 06:12:40', 'At local facility — CHINO, CA, out for delivery'],
+      ['2026-09-09 21:40:02', 'Departed facility — LOS ANGELES, CA hub, in transit to destination city'],
+      ['2026-09-09 03:41:22', 'In transit — MEMPHIS, TN hub, arrived at regional sorting center'],
+      ['2026-09-08 20:05:10', 'Shipment information sent to carrier, origin scan completed'],
+      ['2026-09-08 14:22:31', '已预报 — Shipment information received, awaiting carrier pickup']
+    ]
+  },
+  {
+    orderNo: 'CO-20260910-00127',
+    trackingNo: '1Z999AA10123456784',
+    trackTime: '2026-09-10 06:41:02 UTC-8',
+    track: 'Departed carrier facility — Memphis, TN hub, in transit to destination sorting center',
+    region: 'US, TN, Memphis', zip: '38118',
+    createTime: '2026-09-08 11:05:47',
+    steps: {
+      '已预报': '2026-09-08 11:05:47', '已上网': '2026-09-08 18:33:09', '在途': '2026-09-10 06:41:02'
+    },
+    history: [
+      ['2026-09-10 06:41:02', 'Departed carrier facility — Memphis, TN hub, in transit to destination sorting center'],
+      ['2026-09-10 04:18:55', 'Arrived at carrier facility — MEMPHIS, TN, sortation complete'],
+      ['2026-09-09 19:02:31', 'In transit — departed origin facility, line haul to next hub'],
+      ['2026-09-09 10:27:14', 'In transit — arrived at regional sorting center'],
+      ['2026-09-08 18:33:09', 'Shipment information sent to carrier, origin scan completed'],
+      ['2026-09-08 11:05:47', '已预报 — Shipment information received, awaiting carrier pickup']
+    ]
+  },
+  {
+    orderNo: 'CO-20260909-00126',
+    trackingNo: '9400111899223197',
+    trackTime: '2026-09-09 21:15:48 UTC-8',
+    track: 'Arrived at destination facility — Newark, NJ, awaiting local delivery courier pickup',
+    region: 'US, NJ, Newark', zip: '07105',
+    createTime: '2026-09-07 09:30:12',
+    steps: {
+      '已预报': '2026-09-07 09:30:12', '已上网': '2026-09-07 15:12:44', '在途': '2026-09-08 08:55:20',
+      '到达待取': '2026-09-09 21:15:48'
+    },
+    history: [
+      ['2026-09-09 21:15:48', 'Arrived at destination facility — Newark, NJ, awaiting local delivery courier pickup'],
+      ['2026-09-09 12:40:07', 'Departed regional hub — PHILADELPHIA, PA, in transit to destination city'],
+      ['2026-09-08 08:55:20', 'In transit — arrived at regional sorting center'],
+      ['2026-09-07 15:12:44', 'Shipment accepted by carrier, origin scan completed'],
+      ['2026-09-07 09:30:12', '已预报 — Shipment information received, awaiting carrier pickup']
+    ]
+  },
+  {
+    orderNo: 'CO-20260909-00125',
+    trackingNo: '875348197904',
+    trackTime: '2026-09-09 17:02:33 UTC-8',
+    track: 'In transit — departed origin facility, estimated delivery within 2 business days',
+    region: 'US, GA, Savannah', zip: '31401',
+    createTime: '2026-09-07 16:48:55',
+    steps: {
+      '已预报': '2026-09-07 16:48:55', '已上网': '2026-09-08 02:11:36', '在途': '2026-09-09 17:02:33'
+    },
+    history: [
+      ['2026-09-09 17:02:33', 'In transit — departed origin facility, estimated delivery within 2 business days'],
+      ['2026-09-09 05:36:19', 'In transit — arrived at origin regional sorting center'],
+      ['2026-09-08 02:11:36', 'Shipment information sent to carrier, origin scan completed'],
+      ['2026-09-07 16:48:55', '已预报 — Shipment information received, awaiting carrier pickup']
+    ]
+  },
+  {
+    orderNo: 'CO-20260908-00124',
+    trackingNo: '612999988888',
+    trackTime: '2026-09-08 09:12:07 UTC-8',
+    track: 'Picked up — shipment received at origin facility, awaiting carrier origin scan',
+    region: 'US, TX, Dallas', zip: '75261',
+    createTime: '2026-09-06 10:20:41',
+    steps: {
+      '已预报': '2026-09-06 10:20:41', '已上网': '2026-09-08 09:12:07'
+    },
+    history: [
+      ['2026-09-08 09:12:07', 'Picked up — shipment received at origin facility, awaiting carrier origin scan'],
+      ['2026-09-07 22:48:16', 'Label created, awaiting carrier pickup'],
+      ['2026-09-06 10:20:41', '已预报 — Shipment information received, awaiting carrier pickup']
+    ]
+  },
+  {
+    orderNo: 'CO-20260907-00123', trackingNo: '875348197906',
+    trackTime: '2026-09-07 19:22:05 UTC-8',
+    track: 'Delivered — left with individual at 1420 S Grove Ave, Chicago, IL 60632, United States',
+    region: 'US, IL, Chicago', zip: '60632',
+    createTime: '2026-09-05 08:15:20',
+    steps: {
+      '已预报': '2026-09-05 08:15:20', '已上网': '2026-09-05 21:40:11', '在途': '2026-09-06 13:05:47',
+      '到达待取': '2026-09-07 07:31:09', '已妥投': '2026-09-07 19:22:05'
+    },
+    history: [
+      ['2026-09-07 19:22:05', 'Delivered — left with individual at 1420 S Grove Ave, Chicago, IL 60632'],
+      ['2026-09-07 07:31:09', 'Arrived at destination facility — CHICAGO, IL, out for delivery'],
+      ['2026-09-06 13:05:47', 'Departed carrier facility — MEMPHIS, TN hub, in transit to destination'],
+      ['2026-09-05 08:15:20', '已预报 — Shipment information received, awaiting carrier pickup']
+    ]
+  },
+  {
+    orderNo: 'CO-20260907-00122', trackingNo: '1Z999AA10123456785',
+    trackTime: '2026-09-07 11:48:33 UTC-8',
+    track: 'In transit — departed SEATTLE, WA gateway, en route to destination delivery station',
+    region: 'US, WA, Seattle', zip: '98158',
+    createTime: '2026-09-05 14:02:38',
+    steps: {
+      '已预报': '2026-09-05 14:02:38', '已上网': '2026-09-06 03:18:52', '在途': '2026-09-07 02:44:17'
+    },
+    history: [
+      ['2026-09-07 11:48:33', 'In transit — departed SEATTLE, WA gateway, en route to destination delivery station'],
+      ['2026-09-06 03:18:52', 'Shipment information sent to carrier, origin scan completed at SEATTLE, WA'],
+      ['2026-09-05 14:02:38', '已预报 — Shipment information received, awaiting carrier pickup']
+    ]
+  },
+  {
+    orderNo: 'CO-20260906-00121', trackingNo: '9400111899223198',
+    trackTime: '2026-09-06 20:35:12 UTC-8',
+    track: 'Arrived at destination facility — MIAMI, FL, awaiting local delivery courier pickup',
+    region: 'US, FL, Miami', zip: '33122',
+    createTime: '2026-09-04 09:47:31',
+    steps: {
+      '已预报': '2026-09-04 09:47:31', '已上网': '2026-09-04 22:13:06', '在途': '2026-09-05 16:58:24',
+      '到达待取': '2026-09-06 20:35:12'
+    },
+    history: [
+      ['2026-09-06 20:35:12', 'Arrived at destination facility — MIAMI, FL, awaiting local delivery courier pickup'],
+      ['2026-09-05 16:58:24', 'Departed carrier facility — ORLANDO, FL hub, in transit to destination'],
+      ['2026-09-04 09:47:31', '已预报 — Shipment information received, awaiting carrier pickup']
+    ]
+  },
+  {
+    orderNo: 'CO-20260906-00120', trackingNo: '612999988889',
+    trackTime: '2026-09-06 10:08:44 UTC-8',
+    track: 'Departed carrier facility — PHOENIX, AZ hub, in transit to destination sorting center',
+    region: 'US, AZ, Phoenix', zip: '85043',
+    createTime: '2026-09-04 16:22:09',
+    steps: {
+      '已预报': '2026-09-04 16:22:09', '已上网': '2026-09-05 05:51:38', '在途': '2026-09-06 10:08:44'
+    },
+    history: [
+      ['2026-09-06 10:08:44', 'Departed carrier facility — PHOENIX, AZ hub, in transit to destination sorting center'],
+      ['2026-09-05 05:51:38', 'Shipment information sent to carrier, origin scan completed'],
+      ['2026-09-04 16:22:09', '已预报 — Shipment information received, awaiting carrier pickup']
+    ]
+  },
+  {
+    orderNo: 'CO-20260905-00119', trackingNo: '875348197907',
+    trackTime: '2026-09-05 22:51:26 UTC-8',
+    track: 'Delivery attempted — no access to front door, will reattempt next business day, COLUMBUS, OH',
+    region: 'US, OH, Columbus', zip: '43228',
+    createTime: '2026-09-03 07:33:55',
+    steps: {
+      '已预报': '2026-09-03 07:33:55', '已上网': '2026-09-03 20:07:41', '在途': '2026-09-04 12:36:19',
+      '到达待取': '2026-09-05 09:14:02', '投递失败': '2026-09-05 22:51:26'
+    },
+    history: [
+      ['2026-09-05 22:51:26', 'Delivery attempted — no access to front door, will reattempt next business day, COLUMBUS, OH'],
+      ['2026-09-05 09:14:02', 'Arrived at destination facility — COLUMBUS, OH, out for delivery'],
+      ['2026-09-04 12:36:19', 'Departed carrier facility — INDIANAPOLIS, IN hub, in transit to destination'],
+      ['2026-09-03 07:33:55', '已预报 — Shipment information received, awaiting carrier pickup']
+    ]
+  },
+  {
+    orderNo: 'CO-20260905-00118', trackingNo: '1Z999AA10123456786',
+    trackTime: '2026-09-05 12:19:03 UTC-8',
+    track: 'Shipment information sent to carrier, origin scan completed at NEW YORK, NY facility',
+    region: 'US, NY, New York', zip: '11205',
+    createTime: '2026-09-03 11:58:40',
+    steps: {
+      '已预报': '2026-09-03 11:58:40', '已上网': '2026-09-05 12:19:03'
+    },
+    history: [
+      ['2026-09-05 12:19:03', 'Shipment information sent to carrier, origin scan completed at NEW YORK, NY facility'],
+      ['2026-09-04 07:26:15', 'Label created, awaiting carrier pickup at origin facility'],
+      ['2026-09-03 11:58:40', '已预报 — Shipment information received, awaiting carrier pickup']
+    ]
+  },
+  {
+    orderNo: 'CO-20260904-00117', trackingNo: '9400111899223199',
+    trackTime: '2026-09-04 18:44:57 UTC-8',
+    track: 'Arrived at destination facility — PHILADELPHIA, PA, awaiting local delivery courier pickup',
+    region: 'US, PA, Philadelphia', zip: '19136',
+    createTime: '2026-09-02 08:26:14',
+    steps: {
+      '已预报': '2026-09-02 08:26:14', '已上网': '2026-09-02 19:53:27', '在途': '2026-09-03 15:07:48',
+      '到达待取': '2026-09-04 18:44:57'
+    },
+    history: [
+      ['2026-09-04 18:44:57', 'Arrived at destination facility — PHILADELPHIA, PA, awaiting local delivery courier pickup'],
+      ['2026-09-03 15:07:48', 'Departed carrier facility — HARRISBURG, PA hub, in transit to destination'],
+      ['2026-09-02 08:26:14', '已预报 — Shipment information received, awaiting carrier pickup']
+    ]
+  },
+  {
+    orderNo: 'CO-20260904-00116', trackingNo: '612999988890',
+    trackTime: '2026-09-04 09:07:21 UTC-8',
+    track: 'In transit — departed DENVER, CO sorting center, estimated delivery in 2 business days',
+    region: 'US, CO, Denver', zip: '80022',
+    createTime: '2026-09-02 15:39:48',
+    steps: {
+      '已预报': '2026-09-02 15:39:48', '已上网': '2026-09-03 04:12:55', '在途': '2026-09-04 09:07:21'
+    },
+    history: [
+      ['2026-09-04 09:07:21', 'In transit — departed DENVER, CO sorting center, estimated delivery in 2 business days'],
+      ['2026-09-03 04:12:55', 'Shipment information sent to carrier, origin scan completed'],
+      ['2026-09-02 15:39:48', '已预报 — Shipment information received, awaiting carrier pickup']
+    ]
+  },
+  {
+    orderNo: 'CO-20260903-00115', trackingNo: '875348197908',
+    trackTime: '2026-09-03 21:33:09 UTC-8',
+    track: '已预报 — Shipment information received, awaiting carrier pickup at PORTLAND, OR origin',
+    region: 'US, OR, Portland', zip: '97218',
+    createTime: '2026-09-01 10:12:36',
+    steps: {
+      '已预报': '2026-09-01 10:12:36'
+    },
+    history: [
+      ['2026-09-03 21:33:09', '已预报 — Shipment information received, awaiting carrier pickup at PORTLAND, OR origin'],
+      ['2026-09-01 10:12:36', '已预报 — Shipment information received, awaiting carrier pickup']
+    ]
+  },
+  {
+    orderNo: 'CO-20260903-00114', trackingNo: '1Z999AA10123456787',
+    trackTime: '2026-09-03 08:56:44 UTC-8',
+    track: 'Delivered — left at receiving dock, 12300 Riverside Dr, Eastvale, CA 91752, United States',
+    region: 'US, CA, Eastvale', zip: '91752',
+    createTime: '2026-09-01 13:47:02',
+    steps: {
+      '已预报': '2026-09-01 13:47:02', '已上网': '2026-09-01 23:18:44', '在途': '2026-09-02 14:02:37',
+      '到达待取': '2026-09-03 06:41:20', '已妥投': '2026-09-03 08:56:44'
+    },
+    history: [
+      ['2026-09-03 08:56:44', 'Delivered — left at receiving dock, 12300 Riverside Dr, Eastvale, CA 91752, United States'],
+      ['2026-09-03 06:41:20', 'Arrived at destination facility — EASTVALE, CA, out for delivery'],
+      ['2026-09-02 14:02:37', 'Departed carrier facility — LOS ANGELES, CA hub, in transit to destination'],
+      ['2026-09-01 13:47:02', '已预报 — Shipment information received, awaiting carrier pickup']
+    ]
+  }
+];
+
+/* ==========================================================================
+   列表渲染 + 分页（LC-OMS 第五节：分页整体靠右 justify-content:flex-end）
+   每页条数默认 5；切换页码 / 每页条数均重渲染表格与分页条
+   ========================================================================== */
+var PAGE_SIZE = 10;
+var currentPage = 1;
+/* 当前列表数据 = 查询结果（未查询时 = 全量）；表格与分页都读它。
+   必须在首次 renderTable() 之前声明，否则 var 提升后仍是 undefined 会抛错 */
+var viewRows = ROWS.slice();
+/* 「暂无数据」的原因：'' = 输入的单号确实不在列表里；'date' = 单号存在但被「日期范围」挡住
+   （空态文案据此给出可操作提示，避免用户误判为「查不到单号」） */
+var emptyReason = '';
+/* 多行文本框可见行数 = 5（框高固定 28px × 5 = 140px）。必须声明在首次 renderTaGutter() 之前，
+   否则 var 提升后是 undefined → Math.max(x, undefined) = NaN → 编号列空、rows 属性失效 */
+var TA_VISIBLE_ROWS = 5;
+/* 最多允许提交的跟踪号条数（超限自动截断 + 右下角红字提示） */
+var TA_MAX_LINES = 20;
+
+function totalPages(){
+  return Math.max(1, Math.ceil(viewRows.length / PAGE_SIZE));
+}
+
+function renderTable(){
+  var body = document.getElementById('tableBody');
+  if(!viewRows.length){   /* 查询无结果：区分「单号不存在」与「被日期范围挡住」 */
+    body.innerHTML = '<tr class="row-empty"><td colspan="4">' +
+      (emptyReason === 'date'
+        ? '暂无数据：该单号不在所选时间范围内，请调整「日期范围」后重新查询'
+        : '暂无数据') +
+    '</td></tr>';
+    return;
+  }
+  var start = (currentPage - 1) * PAGE_SIZE;
+  var pageRows = viewRows.slice(start, start + PAGE_SIZE);
+  body.innerHTML = pageRows.map(function(row, k){
+  var i = start + k;   /* 全局索引：toggleDetail(i) 依赖它在完整 ROWS 中定位 */
+  return '' +
+  '<tr class="row-main" data-card="' + i + '">' +
+    /* 单号信息 */
+    '<td>' +
+      '<div class="field"><span class="f-label">客户订单号：</span><span class="f-val">' + (row.orderNo || '—') + '</span></div>' +
+      '<div class="field"><span class="f-label">跟踪号：</span><span class="f-val">' + (row.trackingNo || '—') + '</span></div>' +
+    '</td>' +
+    /* 最新轨迹 */
+    '<td>' +
+      '<div class="field track-time"><span class="f-label">轨迹时间：</span><span class="f-val">' + (row.trackTime || '—') + '</span></div>' +
+      '<div class="field"><span class="f-label">轨迹：</span><span class="f-val ellip" data-time="' + (row.trackTime || '') + '">' + (row.track || '—') + '</span></div>' +
+    '</td>' +
+    /* 位置信息 */
+    '<td>' +
+      '<div class="field"><span class="f-label">地区：</span><span class="f-val">' + (row.region || '—') + '</span></div>' +
+      '<div class="field"><span class="f-label">邮编：</span><span class="f-val">' + (row.zip || '—') + '</span></div>' +
+    '</td>' +
+    /* 操作记录：卡片右缘内嵌「展开」箭头（原「操作」列与「详情」文字链已删除） */
+    '<td>' +
+      '<div class="field"><span class="f-label">创建时间：</span><span class="f-val">' + (row.createTime || '—') + '</span></div>' +
+      '<button type="button" class="row-expand" aria-expanded="false" aria-label="展开详情" title="展开 / 收起详情" onclick="toggleDetail(' + i + ', this)">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9.6 12 3.2 19 9.6"/><path d="M5 14.4 12 20.8 19 14.4"/></svg>' +
+      '</button>' +
+    '</td>' +
+  '</tr>' +
+  /* 行内详情条：默认隐藏，点右缘箭头向下展开（原「详情弹窗」内容内联，不再弹窗） */
+  '<tr class="row-detail hide" data-detail="' + i + '"><td colspan="4">' +
+    '<div class="dt-wrap">' +
+      '<div class="ship-steps">' + stepperHtml(row.steps || {}) + '</div>' +
+      '<div class="ship-sep"></div>' +
+      '<div class="ship-list">' + (row.history || []).map(function(h){
+        return '<div class="hist">' +
+                 '<div class="hist-time">' + h[0] + '</div>' +
+                 '<div class="hist-text">' + h[1] + '</div>' +
+               '</div>';
+      }).join('') + '</div>' +
+    '</div>' +
+  '</td></tr>' +
+  (k < pageRows.length - 1 ? '<tr class="gap"><td colspan="4"></td></tr>' : '');
+  }).join('');
+}
+
+/* 分页条：共 N 条 + 每页条数（.dd 自定义下拉，向上展开）+ 页码 + 跳页，整体靠右 */
+function renderPagination(){
+  var el = document.getElementById('pagination');
+  var tp = totalPages();
+  var nums = '';
+  for(var p = 1; p <= Math.min(tp, 6); p++){
+    nums += '<span class="pg' + (p === currentPage ? ' active' : '') + '" onclick="goPage(' + p + ')">' + p + '</span>';
+  }
+  if(tp > 6) nums += '<span class="pg pg-arrow disabled">...</span>';
+  var sizes = [10, 20, 50, 100].map(function(n){
+    return '<div class="dd-item' + (n === PAGE_SIZE ? ' active' : '') + '" data-n="' + n + '" onclick="event.stopPropagation();setPageSize(' + n + ')">' + n + ' 条/页</div>';
+  }).join('');
+  el.innerHTML =
+    '<div class="pag-left">共 <b>' + viewRows.length + '</b> 条' +
+      '<div class="dd pag-dd" id="pageSizeDd">' +
+        '<span class="dd-label">' + PAGE_SIZE + ' 条/页</span>' +
+        '<span class="dd-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>' +
+        '<div class="dd-list">' + sizes + '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="pag-right">' +
+      '<div class="pag-nums">' +
+        '<span class="pg pg-arrow' + (currentPage <= 1 ? ' disabled' : '') + '" onclick="prevPage()">&lt;</span>' +
+        nums +
+        '<span class="pg pg-arrow' + (currentPage >= tp ? ' disabled' : '') + '" onclick="nextPage()">&gt;</span>' +
+      '</div>' +
+      '前往<input class="pag-jump" type="text" value="' + currentPage + '" onkeydown="if(event.key===\'Enter\')jumpTo(this)" />页' +
+    '</div>';
+  bindDd(el);   /* 分页条每次重建，需重新绑定下拉开合 */
+}
+
+function goPage(page){
+  page = parseInt(page, 10);
+  if(isNaN(page) || page < 1) page = 1;
+  if(page > totalPages()) page = totalPages();
+  currentPage = page;
+  renderTable();
+  renderPagination();
+}
+function prevPage(){ goPage(currentPage - 1); }
+function nextPage(){ goPage(currentPage + 1); }
+function jumpTo(input){ goPage(input.value); }
+function setPageSize(n){
+  PAGE_SIZE = n;
+  currentPage = 1;
+  renderTable();
+  renderPagination();
+}
+
+renderTaGutter();   /* 编号列 + 查询数量初始化 */
+renderTable();
+renderPagination();
+
+/* ==========================================================================
+   行内展开详情：阶段进度条 + 完整轨迹
+   列表每行只显示「最新轨迹」，展开后在行卡片正下方显示该单号的完整轨迹（历史 + 最新）
+   ========================================================================== */
+/* 进度条：已走过节点蓝点 + 蓝线（相邻两节点都到达才连蓝线），未到达灰点灰线 */
+function stepperHtml(steps){
+  var done = STAGES.map(function(s){ return !!steps[s]; });
+  return STAGES.map(function(name, i){
+    var cls = 'step' + (done[i] ? ' done' : '');
+    if(i > 0 && done[i-1] && done[i]) cls += ' l-blue';
+    if(i < STAGES.length - 1 && done[i] && done[i+1]) cls += ' r-blue';
+    return '<div class="' + cls + '">' +
+             '<span class="dot"></span>' +
+             '<div class="step-name">' + name + '</div>' +
+             '<div class="step-time">' + (steps[name] || '') + '</div>' +
+           '</div>';
+  }).join('');
+}
+/* 展开 / 收起：详情条在主行卡片正下方，展开时主行下缘圆角收平，两者拼成一张卡 */
+function toggleDetail(i, btn){
+  var tr = document.querySelector('tr.row-detail[data-detail="' + i + '"]');
+  if(!tr) return;
+  tr.classList.toggle('hide');
+  var open = !tr.classList.contains('hide');
+  var main = btn.closest('tr.row-main');
+  if(main) main.classList.toggle('open', open);
+  btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+
+/* ==========================================================================
+   时间范围选择器：日期范围面板（整框可点 / 粘连选择 / 时分秒 / 清空·确定）
+   ========================================================================== */
+var dpStart = null, dpEnd = null, dpHover = null;
+var dpLeft = null, dpRight = null;   /* 两个面板当前月份（Date，1号） */
+var WK = ['日','一','二','三','四','五','六'];
+
+function pad(n){ return (n<10?'0':'')+n; }
+function fmt(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+
+function toggleDatePanel(e){
+  if(e) e.stopPropagation();
+  var panel = document.getElementById('datePanel');
+  var combo = document.getElementById('dateCombo');
+  var open = panel.classList.toggle('open');
+  combo.classList.toggle('open', open);
+  if(open){
+    closeTimePop(false, true);
+    closeAllDd();      /* 展开日期面板时收起维度下拉，避免两层浮层叠压 */
+    renderDp();   /* 月份由 renderDp 内的 ensureDpMonths() 兜底初始化 */
+  }
+}
+function closeDatePanel(){
+  document.getElementById('datePanel').classList.remove('open');
+  document.getElementById('dateCombo').classList.remove('open');
+  dpHover = null;
+  closeTimePop(false, true);
+}
+function dpNav(dir){
+  dpLeft = new Date(dpLeft.getFullYear(), dpLeft.getMonth()+dir, 1);
+  dpRight = new Date(dpRight.getFullYear(), dpRight.getMonth()+dir, 1);
+  renderDp();
+}
+/* 面板月份初始化：首次使用（或清空后）默认显示「当月 + 下月」。
+   必须在 renderDp 内兜底——否则页面刚加载就点「重置」时 dpLeft 仍为 null，renderDp 抛错中断后续逻辑 */
+function ensureDpMonths(){
+  if(!dpLeft){
+    var t = new Date();
+    dpLeft = new Date(t.getFullYear(), t.getMonth(), 1);
+    dpRight = new Date(t.getFullYear(), t.getMonth()+1, 1);
+  }
+}
+function renderDp(){
+  ensureDpMonths();
+  document.getElementById('dpLeftTitle').textContent = dpLeft.getFullYear()+' 年 '+(dpLeft.getMonth()+1)+' 月';
+  document.getElementById('dpRightTitle').textContent = dpRight.getFullYear()+' 年 '+(dpRight.getMonth()+1)+' 月';
+  document.getElementById('dpLeftGrid').innerHTML = dpGridHtml(dpLeft);
+  document.getElementById('dpRightGrid').innerHTML = dpGridHtml(dpRight);
+  /* 同步顶部时间行日期；选了具体日期后时分秒显示默认值，未选时显示灰色提示词 */
+  document.getElementById('dtStartDate').value = dpStart ? fmt(dpStart) : '';
+  document.getElementById('dtEndDate').value = dpEnd ? fmt(dpEnd) : '';
+  var st = document.getElementById('dtStartTime'), et = document.getElementById('dtEndTime');
+  if(dpStart){ if(!st.value) st.value = '00:00:00'; } else { st.value = ''; }
+  if(dpEnd){ if(!et.value) et.value = '23:59:59'; } else { et.value = ''; }
+}
+function dpGridHtml(month){
+  var html = WK.map(function(w){ return '<span class="dp-wk">'+w+'</span>'; }).join('');
+  var first = new Date(month.getFullYear(), month.getMonth(), 1);
+  var days = new Date(month.getFullYear(), month.getMonth()+1, 0).getDate();
+  for(var i=0;i<first.getDay();i++){ html += '<span class="dp-day dim"></span>'; }
+  var hoverEnd = (dpStart && !dpEnd && dpHover && dpHover>=dpStart.getTime()) ? dpHover : null;
+  for(var d=1;d<=days;d++){
+    var cur = new Date(month.getFullYear(), month.getMonth(), d);
+    var cls = 'dp-day', t = cur.getTime();
+    var lo = dpStart ? dpStart.getTime() : null;
+    var hi = dpEnd ? dpEnd.getTime() : hoverEnd;
+    if(lo!==null && hi!==null && t>lo && t<hi) cls += ' in-range';
+    if(dpEnd && t===dpEnd.getTime()) cls += ' end';
+    if(dpStart && t===lo) cls += ' start';
+    html += '<span class="'+cls+'" data-t="'+t+'" onclick="dpPick('+t+')" onmouseover="dpHoverDay('+t+')">'+d+'</span>';
+  }
+  return html;
+}
+/* 粘连选择：选了开始、未选结束时，鼠标滑过即实时预览区间 */
+function dpHoverDay(t){
+  if(dpStart && !dpEnd && t>=dpStart.getTime()){
+    if(dpHover !== t){ dpHover = t; renderDp(); }
+  }
+}
+function dpPick(t){
+  closeAllDd();   /* 点选日期时收起维度下拉 */
+  var picked = new Date(t);
+  if(!dpStart || (dpStart && dpEnd)){
+    dpStart = picked; dpEnd = null; dpHover = null;
+  }else if(t >= dpStart.getTime()){
+    dpEnd = picked; dpHover = null;
+  }else{
+    dpStart = picked; dpEnd = null; dpHover = null;
+  }
+  renderDp();
+}
+function dpConfirm(){
+  if(!dpStart){ closeDatePanel(); return; }
+  if(!dpEnd) dpEnd = dpStart;
+  var st = document.getElementById('dtStartTime').value || '00:00:00';
+  var et = document.getElementById('dtEndTime').value || '23:59:59';
+  var s = document.getElementById('drStart'), e2 = document.getElementById('drEnd');
+  /* 写入格式铁律：YYYY-MM-DD HH:MM:SS（必带时分秒）
+     两段宽度由 CSS 等分列内剩余空间（flex:1 1 0），不再按内容逐次改 flex-basis，
+     否则两个 19 字符日期会把整条组合框撑破左列 */
+  s.value = fmt(dpStart)+' '+st;
+  e2.value = fmt(dpEnd)+' '+et;
+  s.title = s.value; e2.title = e2.value;   /* 合并式窄列下 19 字符用省略号，悬停看完整值 */
+  closeDatePanel();
+}
+function dpClear(){
+  dpStart = dpEnd = dpHover = null;
+  var s = document.getElementById('drStart'), e2 = document.getElementById('drEnd');
+  s.value = ''; e2.value = '';
+  s.title = ''; e2.title = '';
+  document.getElementById('dtStartTime').value = '';
+  document.getElementById('dtEndTime').value = '';
+  renderDp();
+}
+
+/* ==========================================================================
+   时间滚动选择（时/分/秒 三列 + 取消/确定）
+   ========================================================================== */
+var tpTarget = null, tpSel = {h:0,m:0,s:0}, tpBackup = '';
+function openTimePop(input){
+  var pop = document.getElementById('timePop');
+  if(tpTarget === input && pop.classList.contains('open')){ closeTimePop(false); return; }
+  tpTarget = input; tpBackup = input.value;
+  var parts = (input.value||'').split(':');
+  tpSel = { h:+parts[0]||0, m:+parts[1]||0, s:+parts[2]||0 };
+  pop.classList.add('open');   /* 先显示，再构建并滚动定位（display:none 时 scrollTop 赋值无效） */
+  buildTpCol('tpH', 23, 'h'); buildTpCol('tpM', 59, 'm'); buildTpCol('tpS', 59, 's');
+  /* 弹层动态定位到被点时间框正下方，不超出面板右缘 */
+  var panel = document.getElementById('datePanel');
+  var ir = input.getBoundingClientRect(), pr = panel.getBoundingClientRect();
+  var left = ir.left - pr.left;
+  var maxLeft = pr.width - pop.offsetWidth - 8;
+  pop.style.left = Math.max(8, Math.min(left, maxLeft)) + 'px';
+  pop.style.top = (ir.bottom - pr.top + 4) + 'px';
+}
+function buildTpCol(id, max, key){
+  var col = document.getElementById(id);
+  var html = '';
+  for(var i=0;i<=max;i++){
+    html += '<div class="tp-item'+(tpSel[key]===i?' sel':'')+'" data-v="'+i+'" onclick="tpClick(\''+key+'\','+i+',this)">'+pad(i)+'</div>';
+  }
+  col.innerHTML = html;
+  var sel = col.querySelector('.sel');
+  if(sel) col.scrollTop = Math.max(0, sel.offsetTop - col.clientHeight/2 + 13);
+}
+function tpClick(key, v, el){
+  tpSel[key] = v;
+  var col = el.parentNode;
+  col.querySelectorAll('.tp-item').forEach(function(n){ n.classList.remove('sel'); });
+  el.classList.add('sel');
+}
+function closeTimePop(ok, silent){
+  var pop = document.getElementById('timePop');
+  if(pop.classList.contains('open') && tpTarget){
+    if(ok){ tpTarget.value = pad(tpSel.h)+':'+pad(tpSel.m)+':'+pad(tpSel.s); }
+    else if(!silent){ tpTarget.value = tpBackup; }
+  }
+  pop.classList.remove('open');
+  tpTarget = null;
+}
+
+/* ==========================================================================
+   通用自定义下拉 .dd（时间维度：创建时间 / 轨迹时间）
+   真实内联 SVG 三角：点击展开旋转 180° 变蓝，选中后标签变黑；列表内不含提示词项
+   ========================================================================== */
+function closeAllDd(except){
+  document.querySelectorAll('.dd.open').forEach(function(d){
+    if(d !== except) d.classList.remove('open');
+  });
+}
+/* 通用 .dd 绑定：筛选区（创建时间维度）+ 分页条（每页条数）共用。
+   data-ddBound 防重复绑定——分页条重建后会再次调用，不加标记会导致
+   同一元素绑两次 click、开合被 toggle 抵消。 */
+function bindDd(root){
+  (root || document).querySelectorAll('.dd').forEach(function(dd){
+    if(dd.dataset.ddBound === '1') return;
+    dd.dataset.ddBound = '1';
+    /* 整框点击开合（互斥：先关其它下拉，并收起可能已打开的日期面板，避免两层浮层叠压） */
+    dd.addEventListener('click', function(e){
+      e.stopPropagation();
+      var wasOpen = this.classList.contains('open');
+      closeAllDd(this);
+      closeDatePanel();
+      this.classList.toggle('open', !wasOpen);
+    });
+    if(dd.classList.contains('pag-dd')) return;   /* 分页下拉：选项行为由自身 onclick 处理 */
+    /* 选项点击：写入标签 → 变黑 → 高亮 → 立即收起 */
+    var items = dd.querySelectorAll('.dd-item');
+    items.forEach(function(it){
+      it.addEventListener('click', function(e){
+        e.stopPropagation();
+        var label = dd.querySelector('.dd-label');
+        if(label) label.textContent = this.textContent;
+        dd.classList.add('has-value');
+        dd.dataset.value = this.dataset.v || this.textContent;
+        items.forEach(function(n){ n.classList.remove('active'); });
+        this.classList.add('active');
+        dd.classList.remove('open');
+      });
+    });
+  });
+}
+bindDd();
+/* 时间维度初值同步进 dataset.value：doQuery 读它决定按「创建时间」还是「轨迹时间」筛日期。
+   不写的话初值是 undefined，只能靠 doQuery 里的 `|| '创建时间'` 兜底（脆弱） */
+(function(){
+  var t = document.getElementById('dcType');
+  if(t && !t.dataset.value) t.dataset.value = '创建时间';
+})();
+
+/* ==========================================================================
+   跟踪号多行文本框：编号 + 一键删除 + 最多 20 个单号
+   - 框高固定 5 行（28px × 5 = 140px），编号只标实际行数（空态只有 1.），第 6 行起框内滚动
+   - 每行一个单号，最多 20 个：第 21 行起自动截断 + 右下角红字提示
+   - 左下角只放「一键删除」；查询按钮括号内 = 有效条数（去空行，最多 20）
+   ========================================================================== */
+var taTipTimer = null;
+function renderTaGutter(){
+  var ta = document.getElementById('fTrackingNo');
+  var lines = ta.value.split('\n');
+  var n = Math.max(lines.length, 1);   /* 默认只标 1.，随内容增长 */
+  var html = '';
+  for(var i = 0; i < n; i++) html += '<span class="ta-idx">' + (i+1) + '.</span>';
+  document.getElementById('taGutter').innerHTML = html;
+  /* 每行右侧的 × 清除按钮：只给非空行生成，纵向位置 = 行序 × 行高 28px（与编号列严格同行） */
+  var layer = document.getElementById('taRowDel'), btns = '';
+  var xIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  for(var j = 0; j < n; j++){
+    if(!lines[j] || !lines[j].trim()) continue;
+    btns += '<button type="button" class="ta-rowdel on" style="top:' + (j * 28 + 1) + 'px"'
+          + ' aria-label="清除第 ' + (j+1) + ' 行" title="清除第 ' + (j+1) + ' 行"'
+          + ' onmousedown="event.preventDefault()"'
+          + ' onclick="clearTrackingLine(' + j + ')">' + xIcon + '</button>';
+  }
+  if(layer) layer.innerHTML = btns;
+  ta.rows = Math.max(n, TA_VISIBLE_ROWS);   /* 框高固定 5 行；超过 5 行时由 .ta-scroll 滚动 */
+  updateQueryCount();
+}
+/* 行内「×」：删除第 idx 行（0 基），下方各行自动顶上来；焦点留在文本框末尾便于继续输入 */
+function clearTrackingLine(idx){
+  var ta = document.getElementById('fTrackingNo');
+  var lines = ta.value.split('\n');
+  if(idx < 0 || idx >= lines.length) return;
+  lines.splice(idx, 1);
+  ta.value = lines.join('\n');
+  renderTaGutter();
+  ta.focus();
+  try{ ta.selectionStart = ta.selectionEnd = ta.value.length; }catch(e){}
+}
+/* 输入：先做 20 行上限截断，再重绘编号 */
+function onTaInput(){
+  var ta = document.getElementById('fTrackingNo');
+  var lines = ta.value.split('\n');
+  if(lines.length > TA_MAX_LINES){
+    var pos = ta.selectionStart || 0;
+    ta.value = lines.slice(0, TA_MAX_LINES).join('\n');   /* 只保留前 20 行 */
+    ta.selectionStart = ta.selectionEnd = Math.min(pos, ta.value.length);
+    showTaTip();
+  }
+  renderTaGutter();
+}
+/* 超限提示：右下角红字「最多只允许提交20个单号」，2 秒后淡出 */
+function showTaTip(){
+  var tip = document.getElementById('taTip');
+  if(!tip) return;
+  tip.classList.add('show');
+  clearTimeout(taTipTimer);
+  taTipTimer = setTimeout(function(){ tip.classList.remove('show'); }, 2000);
+}
+/* 有效跟踪号列表（按行去空，最多 TA_MAX_LINES 条） */
+function trackingList(){
+  return document.getElementById('fTrackingNo').value.split('\n')
+    .map(function(s){ return s.trim(); })
+    .filter(function(s){ return s !== ''; })
+    .slice(0, TA_MAX_LINES);
+}
+function updateQueryCount(){
+  document.getElementById('qCount').textContent = trackingList().length;
+}
+/* 左下角「一键删除」：清空全部内容，保留焦点便于继续输入 */
+function clearTrackingAll(){
+  var ta = document.getElementById('fTrackingNo');
+  ta.value = '';
+  renderTaGutter();
+  var tip = document.getElementById('taTip');
+  if(tip) tip.classList.remove('show');
+  ta.focus();
+}
+
+/* ==========================================================================
+   查询：按「跟踪号（多行，任一命中即可）+ 时间维度与日期范围」过滤列表
+   - 跟踪号：归一化后做包含匹配（见 kKey）。输入仍以「每行一个单号」为主，
+     但一行内用 逗号 / 分号 / 空格 / Tab 分隔多个单号同样能查到（Excel 粘贴可直接用）
+   - 日期范围：按维度读 创建时间 或 轨迹时间（19 字符前缀「YYYY-MM-DD HH:MM:SS」）
+   - 查询后回到第 1 页；无结果显示「暂无数据」（被日期范围挡住时给出可操作提示）
+   ========================================================================== */
+/* 单号归一化：全角 → 半角、去掉空格/连字符/点/下划线/逗号/分号/冒号/引号、
+   去掉零宽字符与 BOM、统一大写。输入与数据两侧都归一化后再比对 ——
+   这样「8753-4819-7903」「"875348197903"」「全角数字」「Excel 逗号/Tab 粘贴」
+   都能命中同一条数据（原实现只做小写包含匹配，这些形式一律查不到） */
+function kKey(s){
+  return String(s == null ? '' : s)
+    .replace(/[\uFF01-\uFF5E]/g, function(c){ return String.fromCharCode(c.charCodeAt(0) - 0xFEE0); })
+    .replace(/[\u3000\u200B-\u200D\uFEFF\u00AD]/g, '')
+    .replace(/[\s\-_.,;:'"\u0060]/g, '')
+    .toUpperCase();
+}
+/* 归一化后的输入单号列表（沿用「每行一个、最多 20 行」的口径与上限） */
+function kKeys(){ return trackingList().map(kKey).filter(function(s){ return s !== ''; }); }
+/* 命中判定（两个方向，最大化容错）：
+   ① 输入含该单号 → 支持部分/前缀输入（如输入 875348 命中 875348197903）
+   ② 该单号整体出现在输入串里 → 一行内写了多个单号（任意分隔符）也能命中 */
+function keyHit(r, keys, all){
+  if(!keys.length) return true;
+  var t = kKey(r.trackingNo), o = kKey(r.orderNo);
+  return keys.some(function(k){
+    return (!!t && t.indexOf(k) >= 0) || (!!o && o.indexOf(k) >= 0);
+  }) || (!!t && all.indexOf(t) >= 0) || (!!o && all.indexOf(o) >= 0);
+}
+function doQuery(){
+  var keys = kKeys();
+  var all = keys.join('');   /* 拼成一个连续串：换行/逗号/空格/Tab 等分隔符已被 kKey 吃掉 */
+  var dim = document.getElementById('dcType').dataset.value || '创建时间';
+  var start = document.getElementById('drStart').value;
+  var end = document.getElementById('drEnd').value;
+  var hasDate = !!(start && end);
+  var byKey = ROWS.filter(function(r){ return keyHit(r, keys, all); });
+  viewRows = hasDate ? byKey.filter(function(r){
+    var t = dim === '轨迹时间' ? String(r.trackTime || '').slice(0, 19) : (r.createTime || '');
+    return t >= start && t <= end;
+  }) : byKey;
+  /* 无结果时区分「确实没有」与「被日期范围挡住」，避免用户误判为查不到单号 */
+  emptyReason = (!viewRows.length && byKey.length && hasDate) ? 'date' : '';
+  currentPage = 1;
+  renderTable();
+  renderPagination();
+}
+
+/* 点击外部：收起下拉 + 关闭日期面板 */
+document.addEventListener('click', function(e){
+  if(!e.target.closest('.date-combo')) closeDatePanel();
+  if(!e.target.closest('.dd')) closeAllDd();
+});
+
+/* ==========================================================================
+   轨迹字段：悬停全显
+   列表内单行截断（…），悬停时用暗色气泡显示完整内容
+   position:fixed —— .table-wrap 有 overflow-x:auto（另一轴会连带变 auto），
+   绝对定位气泡会被裁剪，故必须用 fixed 并挂到 body 上
+   ========================================================================== */
+var tipBox = document.getElementById('tipBox');
+function escTip(s){
+  return String(s).replace(/[&<>"]/g, function(c){
+    return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c];
+  });
+}
+/* 气泡内容：第一行轨迹时间，第二行轨迹全文（两行结构，对应评审截图） */
+function showTip(el){
+  var time = el.dataset.time || '';
+  tipBox.innerHTML =
+    (time ? '<div class="tip-line">' + escTip(time) + '</div>' : '') +
+    '<div class="tip-line">' + escTip(el.textContent) + '</div>';
+  tipBox.classList.add('show');
+  var r = el.getBoundingClientRect();
+  var tr = tipBox.getBoundingClientRect();
+  var left = Math.max(8, Math.min(r.left, window.innerWidth - tr.width - 8));   /* 右侧不越界 */
+  var top = r.top - tr.height - 8;               /* 默认显示在字段上方，箭头朝下 */
+  var above = top >= 8;
+  if(!above) top = r.bottom + 8;                 /* 上方空间不足则翻到下方，箭头改朝上 */
+  tipBox.classList.toggle('above', above);
+  tipBox.classList.toggle('below', !above);
+  tipBox.style.left = left + 'px';
+  tipBox.style.top = top + 'px';
+}
+function hideTip(){ tipBox.classList.remove('show'); }
+document.getElementById('tableBody').addEventListener('mouseover', function(e){
+  var el = e.target.closest('.f-val.ellip');
+  if(el) showTip(el); else hideTip();
+});
+document.getElementById('tableBody').addEventListener('mouseleave', hideTip);
+window.addEventListener('scroll', hideTip, true);   /* 任意容器滚动即收起，避免气泡错位 */
+
+/* ============ 本页导航栏为展示用（无路由），点击仅阻止 # 跳转 ============ */
+document.querySelectorAll('.topnav a').forEach(function(a){
+  a.addEventListener('click', function(e){ e.preventDefault(); });
+});
+</script>
+
+
+
+<!-- ===================== LC-OMS 卡片区 PRD 区域标注（卡片区=浅绿 Pin + 浮窗） ===================== -->
+<style>
+/* 定位宿主：Pin 绝对定位挂 .page（须相对定位） */
+.page{position:relative}
+/* 卡片区 Pin（浅绿 PRD）：贴卡片区右缘 */
+#apin-card{position:absolute;z-index:121;width:40px;height:40px;border-radius:50%;background:#e9f9ee;color:#237804;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;letter-spacing:.5px;cursor:pointer;box-shadow:0 2px 10px rgba(82,196,26,.4);border:2px solid #52c41a;user-select:none;transition:transform .15s,background .15s;line-height:1}
+#apin-card:hover{transform:scale(1.12);background:#d9f4e3}
+.table-panel.card-highlight{box-shadow:0 0 0 2px #52c41a,0 0 22px rgba(82,196,26,.5)!important;border-radius:var(--radius-lg)}
+/* 浮窗 .pinwin（拖动 / 右下角缩放 / × 关闭；尺寸无上限） */
+.pinwin{position:absolute;z-index:400;width:470px;min-width:300px;min-height:180px;background:#fff;border:1px solid #e5e6eb;border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.16);display:flex;flex-direction:column;font-size:13px;color:#1d2129;overflow:hidden}
+.pinwin-head{display:flex;align-items:center;gap:8px;padding:9px 10px 9px 14px;background:#52c41a;color:#fff;cursor:move;user-select:none;flex-shrink:0}
+.pinwin-title{font-weight:600;font-size:13.5px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pinwin-close{width:22px;height:22px;border:none;background:rgba(255,255,255,.18);color:#fff;border-radius:6px;cursor:pointer;font-size:14px;line-height:1;display:grid;place-items:center;flex-shrink:0}
+.pinwin-close:hover{background:rgba(255,255,255,.32)}
+.pinwin-body{overflow:auto;padding:8px 14px 14px;flex:1}
+.pinwin-rs{position:absolute;right:0;bottom:0;width:16px;height:16px;cursor:nwse-resize;background:linear-gradient(135deg,transparent 55%,rgba(82,196,26,.6) 55%)}
+.psec{margin-bottom:12px}
+.psec-title{font-weight:600;font-size:13px;color:#1d2129;margin:6px 0 8px;display:flex;align-items:center}
+.psec-title .n{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#52c41a;color:#fff;font-size:11px;font-weight:700;margin-right:6px;flex-shrink:0}
+.psec-sub{font-weight:600;font-size:13px;color:#1d2129;margin:6px 0 4px;display:flex;align-items:center}
+.psec-sub::before{content:'';width:3px;height:12px;background:#52c41a;border-radius:2px;margin-right:6px;flex-shrink:0}
+.prow{display:grid;gap:10px;align-items:center;padding:5px 8px;border-radius:6px}
+.prow2{grid-template-columns:minmax(120px,1fr) 2.2fr}
+.prow3{grid-template-columns:minmax(120px,1.1fr) minmax(104px,.9fr) 2fr}
+.prow.head{background:#fafbfc;color:#86909c;font-size:12px;font-weight:500}
+.prow>span{min-width:0;white-space:normal;word-break:break-word;line-height:1.5}
+.prow:not(.head):hover{background:#f7f9fc}
+</style>
+<script>
+/* ===== 卡片区单 Pin + 浮窗（LC-OMS §十：卡片区=浅绿；节按实际取舍，序号连续） ===== */
+(function(){
+  var cfg = {
+    title: '卡片区说明',
+    /* LC-OMS §十：开头第一节固定「背景说明」（1. 2. 分点、一般两点）；不分点阐述分页控件；
+       本页卡片区无业务状态字段 → 不设「状态说明」节；「操作按钮」只登记卡片区实际 <button>，交互（悬停/展开详情内容）不写入 */
+    bg: [
+      '物流轨迹页用于按跟踪号 / 订单号查询单号，并查看每个单号的最新轨迹与完整轨迹历史。',
+      '默认展示该客户的全部单号，每页十条。'
+    ],
+    titles: [
+      /* 块顺序 = 卡片从左到右的列顺序 */
+      { name: '单号信息', rows: [
+        ['客户订单号', '支持精准匹配'],
+        ['跟踪号', '支持精准匹配']
+      ]},
+      { name: '最新轨迹', rows: [
+        ['轨迹时间', '该单号最新一条轨迹的时间；字段值同时包含【轨迹时间 + 轨迹时区】（如「2026-09-10 08:23:15 UTC-8」＝时间 2026-09-10 08:23:15 / 时区 UTC-8，即发生地当地时间）'],
+        ['轨迹', '该单号轨迹的最新状态（承运商最新一条轨迹文案，如 Delivered / In transit / 已预报…）']
+      ]},
+      { name: '位置信息', rows: [
+        ['地区', '该单号最新轨迹的发生地；字段值包含【国家、省州、城市】三级（如「US, CA, Chino」＝国家 US / 省州 CA / 城市 Chino）'],
+        ['邮编', '发生地邮政编码（如 91752）']
+      ]},
+      { name: '操作记录', rows: [
+        ['创建时间', '该单号在本系统的创建时间（yyyy-mm-dd HH:mm:ss）']
+      ]}
+    ],
+    buttons: [
+      ['展开 / 收起', '启用', '卡片右缘双向箭头：展开该单号的完整轨迹详情（阶段进度 + 历史轨迹），再点收起']
+    ]
+  };
+  var host = document.querySelector('.page');
+  var area = document.querySelector('.table-panel');
+  if(!host || !area) return;
+  var dot = document.createElement('div');
+  dot.id = 'apin-card'; dot.title = cfg.title; dot.textContent = 'PRD';
+  host.appendChild(dot);
+  function posDot(){
+    var c = host.getBoundingClientRect(), t = area.getBoundingClientRect();
+    /* 卡片区属右侧区域：Pin 贴区域右缘；超出视口时整体左移，保证圆钮完整可见 */
+    var leftRel = Math.round(t.right - c.left + 6);
+    var over = (Math.round(t.right) + 6 + 40) - (window.innerWidth - 6);
+    if(over > 0) leftRel -= over;
+    dot.style.left = Math.max(6, leftRel) + 'px';
+    dot.style.top = Math.round(t.top - c.top + 6) + 'px';
+  }
+  posDot(); window.addEventListener('resize', posDot);
+  var win = document.createElement('div'); win.className = 'pinwin'; win.style.display = 'none';
+  var rows = '';
+  /* ① 背景说明（LC-OMS §十：开头第一节固定，1. 2. 分点） */
+  rows += '<div class="psec"><div class="psec-title"><span class="n">1</span>背景说明</div>';
+  cfg.bg.forEach(function(t, i){ rows += '<div class="prow"><span>' + (i + 1) + '. ' + t + '</span></div>'; });
+  /* ② 标题（按卡片列标题分块：每块 = 列名小标题 + 字段 | 说明） */
+  rows += '</div><div class="psec"><div class="psec-title"><span class="n">2</span>标题</div>';
+  cfg.titles.forEach(function(g){
+    rows += '<div class="psec-sub">' + g.name + '</div>';
+    rows += '<div class="prow prow2 head"><span>字段</span><span>说明</span></div>';
+    g.rows.forEach(function(r){ rows += '<div class="prow prow2"><span>' + r[0] + '</span><span>' + r[1] + '</span></div>'; });
+  });
+  /* ③ 操作按钮（只登记卡片区实际 <button>） */
+  rows += '</div><div class="psec"><div class="psec-title"><span class="n">3</span>操作按钮</div>';
+  rows += '<div class="prow prow3 head"><span>按钮</span><span>状态</span><span>说明</span></div>';
+  cfg.buttons.forEach(function(r){ rows += '<div class="prow prow3"><span>' + r[0] + '</span><span>' + r[1] + '</span><span>' + r[2] + '</span></div>'; });
+  rows += '</div>';
+  win.innerHTML = '<div class="pinwin-head"><span class="pinwin-title">' + cfg.title + '</span><button class="pinwin-close" title="关闭">×</button></div><div class="pinwin-body">' + rows + '</div><div class="pinwin-rs" title="拖拽右下角缩放"></div>';
+  document.body.appendChild(win);
+  var head = win.querySelector('.pinwin-head'), close = win.querySelector('.pinwin-close'), rs = win.querySelector('.pinwin-rs');
+  var open = false, hovered = false;
+  function refresh(){ area.classList.toggle('card-highlight', open || hovered); }
+  dot.addEventListener('mouseenter', function(){ hovered = true; refresh(); });
+  dot.addEventListener('mouseleave', function(){ hovered = false; refresh(); });
+  function docExt(){ var de=document.documentElement,b=document.body; return { w:Math.max(de.scrollWidth,b.scrollWidth?b.scrollWidth:0), h:Math.max(de.scrollHeight,b.scrollHeight?b.scrollHeight:0) }; }
+  function syncHeight(){ if(typeof postHeight === 'function') postHeight(); }
+  function position(){
+    var a = area.getBoundingClientRect();
+    var w = win.offsetWidth || 470;
+    var sx = window.pageXOffset || 0, sy = window.pageYOffset || 0;
+    var L = Math.min(a.right + sx + 8, window.innerWidth - w - 12); L = Math.max(8, L);
+    var T = Math.max(8, a.top + sy + 40);
+    win.style.left = L + 'px'; win.style.top = T + 'px';
+  }
+  function toggle(){
+    if(open){ win.style.display = 'none'; open = false; }
+    else { win.style.display = 'flex'; position(); open = true; syncHeight(); }
+    refresh();
+  }
+  dot.addEventListener('click', toggle);
+  close.addEventListener('click', toggle);
+  head.addEventListener('mousedown', function(e){
+    if(e.target.closest('.pinwin-close')) return;
+    var sx = e.clientX, sy = e.clientY, oL = win.offsetLeft, oT = win.offsetTop;
+    function mv(ev){
+      var d = docExt();
+      var L = Math.min(Math.max(ev.clientX - sx + oL, -win.offsetWidth + 90), d.w - 40);
+      var T = Math.min(Math.max(ev.clientY - sy + oT, -win.offsetHeight + 90), d.h - 40);
+      win.style.left = L + 'px'; win.style.top = T + 'px';
+    }
+    function up(){ document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); syncHeight(); }
+    document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
+  });
+  rs.addEventListener('mousedown', function(e){
+    e.preventDefault(); e.stopPropagation();
+    var sx = e.clientX, sy = e.clientY, ow = win.offsetWidth, oh = win.offsetHeight;
+    function mv2(ev){
+      win.style.width = Math.max(300, ow + ev.clientX - sx) + 'px';
+      win.style.height = Math.max(200, oh + ev.clientY - sy) + 'px';
+    }
+    function up2(){ document.removeEventListener('mousemove', mv2); document.removeEventListener('mouseup', up2); syncHeight(); }
+    document.addEventListener('mousemove', mv2); document.addEventListener('mouseup', up2);
+  });
+})();
+</script>
+</body>
+</html>
