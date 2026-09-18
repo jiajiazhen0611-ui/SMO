@@ -1439,5 +1439,107 @@ document.querySelectorAll('.topnav a').forEach(function(a){
   });
 })();
 </script>
+<!-- ===================== LC-OMS 搜索区 PRD 区域标注（搜索区=紫色 Pin + 浮窗） ===================== -->
+<style>
+/* 搜索区 Pin（紫色 PRD）：左侧区域 → 贴搜索面板左缘（页面左侧留白） */
+#apin-search{position:absolute;z-index:120;width:40px;height:40px;border-radius:50%;background:#ede9fe;color:#7c3aed;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;letter-spacing:.5px;cursor:pointer;box-shadow:0 2px 10px rgba(139,92,246,.4);border:2px solid #a78bfa;user-select:none;transition:transform .15s,background .15s;line-height:1}
+#apin-search:hover{transform:scale(1.12);background:#ddd6fe}
+.side-col.apin-highlight{box-shadow:0 0 0 2px #a78bfa,0 0 22px rgba(139,92,246,.5)!important;border-radius:var(--radius-lg)}
+/* 紫主题浮窗（复用已有 .pinwin/.psec/.prow 基础样式，仅换主题色） */
+.pinwin.theme-purple .pinwin-head{background:#8b5cf6}
+.pinwin.theme-purple .psec-title .n{background:#8b5cf6}
+.pinwin.theme-purple .pinwin-rs{background:linear-gradient(135deg,transparent 55%,rgba(139,92,246,.6) 55%)}
+</style>
+<script>
+/* ===== 搜索区单 Pin + 浮窗（LC-OMS §十：搜索区=紫；① 搜索条件 ② 操作按钮） ===== */
+(function(){
+  var cfg = {
+    title: '搜索区说明',
+    conditions: [
+      ['跟踪号 / 订单号', '多行文本（每行一个单号，最多 20 个）', '支持精准匹配；每行右侧 × 删该行，左下角垃圾桶一键清空'],
+      ['时间维度', '下拉（单选）', '默认「创建时间」，可切「轨迹时间」：决定日期范围按哪个时间筛'],
+      ['日期范围', '日期范围组合框（开始日期 → 结束日期 + 日历）', '点整框开双月面板，可设起止日期与时分秒；默认空 = 不限']
+    ],
+    buttons: [
+      ['查询（N）', '按当前单号与时间条件查询；括号内 N = 当前有效跟踪号条数'],
+      ['一键删除（垃圾桶）', '清空多行文本框内的全部单号'],
+      ['×（多行框每行右侧）', '删除该行单号（仅非空行显示）'],
+      ['日期面板：清空 / 确定', '清空已选日期（面板保持展开）；确定后把「YYYY-MM-DD HH:MM:SS」写入组合框并关闭']
+    ]
+  };
+  var host = document.querySelector('.page');
+  var area = document.querySelector('.side-col');
+  if(!host || !area) return;
+  var dot = document.createElement('div');
+  dot.id = 'apin-search'; dot.title = cfg.title; dot.textContent = 'PRD';
+  host.appendChild(dot);
+  function posDot(){
+    var c = host.getBoundingClientRect(), t = area.getBoundingClientRect();
+    /* 【LC-OMS Pin 位置铁律】左侧区域贴该区域左缘（页面左侧留白），严禁落在两栏之间的中部缝隙；
+       视口内不足 6px 时右移兜底，保证圆钮完整可见 */
+    var leftRel = Math.round(t.left - c.left - 46);
+    var viewportX = Math.round(t.left) - 46;
+    if(viewportX < 6) leftRel += 6 - viewportX;
+    dot.style.left = leftRel + 'px';
+    dot.style.top = Math.round(t.top - c.top + 6) + 'px';
+  }
+  posDot(); window.addEventListener('resize', posDot);
+  var win = document.createElement('div'); win.className = 'pinwin theme-purple'; win.style.display = 'none';
+  var rows = '';
+  rows += '<div class="psec"><div class="psec-title"><span class="n">1</span>搜索条件</div>';
+  rows += '<div class="prow prow3 head"><span>条件</span><span>类型</span><span>说明</span></div>';
+  cfg.conditions.forEach(function(r){ rows += '<div class="prow prow3"><span>' + r[0] + '</span><span>' + r[1] + '</span><span>' + r[2] + '</span></div>'; });
+  rows += '</div><div class="psec"><div class="psec-title"><span class="n">2</span>操作按钮</div>';
+  rows += '<div class="prow prow2 head"><span>按钮</span><span>说明</span></div>';
+  cfg.buttons.forEach(function(r){ rows += '<div class="prow prow2"><span>' + r[0] + '</span><span>' + r[1] + '</span></div>'; });
+  rows += '</div>';
+  win.innerHTML = '<div class="pinwin-head"><span class="pinwin-title">' + cfg.title + '</span><button class="pinwin-close" title="关闭">×</button></div><div class="pinwin-body">' + rows + '</div><div class="pinwin-rs" title="拖拽右下角缩放"></div>';
+  document.body.appendChild(win);
+  var head = win.querySelector('.pinwin-head'), close = win.querySelector('.pinwin-close'), rs = win.querySelector('.pinwin-rs');
+  var open = false, hovered = false;
+  function refresh(){ area.classList.toggle('apin-highlight', open || hovered); }
+  dot.addEventListener('mouseenter', function(){ hovered = true; refresh(); });
+  dot.addEventListener('mouseleave', function(){ hovered = false; refresh(); });
+  function docExt(){ var de=document.documentElement,b=document.body; return { w:Math.max(de.scrollWidth,b.scrollWidth?b.scrollWidth:0), h:Math.max(de.scrollHeight,b.scrollHeight?b.scrollHeight:0) }; }
+  function syncHeight(){ if(typeof postHeight === 'function') postHeight(); }
+  function position(){
+    var a = area.getBoundingClientRect();
+    var w = win.offsetWidth || 470;
+    var sx = window.pageXOffset || 0, sy = window.pageYOffset || 0;
+    var L = Math.min(a.right + sx + 8, window.innerWidth - w - 12); L = Math.max(8, L);
+    var T = Math.max(8, a.top + sy + 40);
+    win.style.left = L + 'px'; win.style.top = T + 'px';
+  }
+  function toggle(){
+    if(open){ win.style.display = 'none'; open = false; }
+    else { win.style.display = 'flex'; position(); open = true; syncHeight(); }
+    refresh();
+  }
+  dot.addEventListener('click', toggle);
+  close.addEventListener('click', toggle);
+  head.addEventListener('mousedown', function(e){
+    if(e.target.closest('.pinwin-close')) return;
+    var sx = e.clientX, sy = e.clientY, oL = win.offsetLeft, oT = win.offsetTop;
+    function mv(ev){
+      var d = docExt();
+      var L = Math.min(Math.max(ev.clientX - sx + oL, -win.offsetWidth + 90), d.w - 40);
+      var T = Math.min(Math.max(ev.clientY - sy + oT, -win.offsetHeight + 90), d.h - 40);
+      win.style.left = L + 'px'; win.style.top = T + 'px';
+    }
+    function up(){ document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); syncHeight(); }
+    document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
+  });
+  rs.addEventListener('mousedown', function(e){
+    e.preventDefault(); e.stopPropagation();
+    var sx = e.clientX, sy = e.clientY, ow = win.offsetWidth, oh = win.offsetHeight;
+    function mv2(ev){
+      win.style.width = Math.max(300, ow + ev.clientX - sx) + 'px';
+      win.style.height = Math.max(200, oh + ev.clientY - sy) + 'px';
+    }
+    function up2(){ document.removeEventListener('mousemove', mv2); document.removeEventListener('mouseup', up2); syncHeight(); }
+    document.addEventListener('mousemove', mv2); document.addEventListener('mouseup', up2);
+  });
+})();
+</script>
 </body>
 </html>
