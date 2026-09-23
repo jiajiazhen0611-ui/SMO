@@ -239,10 +239,16 @@
   .table-panel{background:transparent;border-radius:var(--radius-lg);border:none;border-top:1px solid var(--border-light);border-bottom:1px solid var(--border-light);box-shadow:none;overflow:visible}
   .table-toolbar{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--border-light)}
   .toolbar-left{display:flex;align-items:center;gap:12px}
-  .toolbar-btn{height:30px;padding:0 12px;background:var(--primary);color:#fff;border-radius:var(--radius-md);font-size:13px;display:inline-flex;align-items:center;gap:5px}
-.toolbar-btn:hover{background:var(--primary-hover)}
-.toolbar-btn-danger{background:#ff7875;border-color:#ff7875}
-.toolbar-btn-danger:hover{background:#ff4d4f;border-color:#ff4d4f}
+  /* 工具栏按钮层级（B 端规范：同一按钮区最多一个主按钮）
+     添加 = 唯一主按钮（实底主蓝、最左）；打印条码/导入/导出 = 二级（白底描边）；废弃 = 危险（白底红字红边，hover 才实底红，置最右远离主按钮） */
+  .toolbar-btn{height:30px;padding:0 12px;background:var(--primary);color:#fff;border:1px solid var(--primary);border-radius:var(--radius-md);font-size:13px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;transition:background .2s,border-color .2s,color .2s}
+.toolbar-btn:hover{background:var(--primary-hover);border-color:var(--primary-hover)}
+/* 二级按钮：打印条码 / 导入 / 导出 */
+.toolbar-btn-barcode,.toolbar-btn-import,.toolbar-btn-export{background:#fff;color:var(--text-secondary);border:1px solid var(--border)}
+.toolbar-btn-barcode:hover,.toolbar-btn-import:hover,.toolbar-btn-export:hover{background:#fff;border-color:var(--primary);color:var(--primary)}
+/* 危险按钮：废弃 */
+.toolbar-btn-danger{background:#fff;color:#ff4d4f;border:1px solid rgba(255,77,79,.45)}
+.toolbar-btn-danger:hover{background:#ff4d4f;border-color:#ff4d4f;color:#fff}
   .tab-group{display:flex;gap:2px}
   .tab-pill{height:28px;padding:0 12px;border-radius:var(--radius-sm);font-size:13px;color:var(--text-secondary);display:inline-flex;align-items:center;gap:4px;transition:all .2s;cursor:pointer}
   .tab-pill:hover{color:var(--primary)}
@@ -388,14 +394,14 @@
   <!-- 筛选区 -->
   <div class="filter-panel" data-proto-id="1">
     <div class="filter-row">
-      <div class="input-wrap" style="flex:1"><input class="f-input" type="text" placeholder="请输入SKU" /><button class="input-clear" aria-label="清除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button><button class="input-search" aria-label="搜索" onclick="doSearch(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></button></div>
-      <div class="input-wrap" style="flex:1.3"><input class="f-input" type="text" placeholder="请输入商品名称/EN中英文名" /><button class="input-clear" aria-label="清除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button><button class="input-search" aria-label="搜索" onclick="doSearch(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></button></div>
+      <div class="input-wrap" style="flex:1"><input class="f-input" type="text" placeholder="请输入SKU" /><button class="input-clear" aria-label="清除" title="清除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button><button class="input-search" aria-label="搜索" title="搜索" onclick="doSearch(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></button></div>
+      <div class="input-wrap" style="flex:1.3"><input class="f-input" type="text" placeholder="请输入商品名称/EN中英文名" /><button class="input-clear" aria-label="清除" title="清除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button><button class="input-search" aria-label="搜索" title="搜索" onclick="doSearch(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></button></div>
       <select class="f-select"><option>毛重</option><option>净重</option><option>货值</option><option>长</option><option>宽</option><option>高</option></select>
       <div class="range-input" style="flex:1">
-        <div class="input-wrap"><input type="text" placeholder="请输入范围" /><button class="input-clear" aria-label="清除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+        <div class="input-wrap"><input type="text" placeholder="请输入范围" /><button class="input-clear" aria-label="清除" title="清除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
         <span class="range-arrow">→</span>
-        <div class="input-wrap"><input type="text" placeholder="请输入范围" /><button class="input-clear" aria-label="清除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
-        <button class="range-btn" aria-label="范围搜索">
+        <div class="input-wrap"><input type="text" placeholder="请输入范围" /><button class="input-clear" aria-label="清除" title="清除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+        <button class="range-btn" aria-label="范围搜索" title="范围搜索">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
         </button>
       </div>
@@ -417,7 +423,7 @@
           </div>
         </div>
       </div>
-      <div class="input-wrap" style="flex:1"><input class="f-input" type="text" placeholder="请输入平台编码" /><button class="input-clear" aria-label="清除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button><button class="input-search" aria-label="搜索" onclick="doSearch(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></button></div>
+      <div class="input-wrap" style="flex:1"><input class="f-input" type="text" placeholder="请输入平台编码" /><button class="input-clear" aria-label="清除" title="清除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button><button class="input-search" aria-label="搜索" title="搜索" onclick="doSearch(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></button></div>
       <button class="btn-default" onclick="resetFilters()">重置</button>
     </div>
   </div>
@@ -445,7 +451,7 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           导出
         </button>
-        <button class="toolbar-btn toolbar-btn-danger">
+        <button class="toolbar-btn toolbar-btn-danger" onclick="openWasteConfirm()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
           废弃
         </button>
@@ -644,7 +650,7 @@ function renderTable(){
   tbody.innerHTML = list.map((row,i) => {
     const st = STATUS_STYLE[row.status] || STATUS_STYLE['草稿'];
     return `
-    <tr class="row-main" data-card="${i}">
+    <tr class="row-main" data-card="${i}" data-code="${row.code}">
       <td><input type="checkbox" /></td>
       <td>
         <div class="field"><span class="f-label">中文商品名称：</span><span class="f-val">${row.cnName||'—'}</span></div>
@@ -1336,6 +1342,15 @@ document.addEventListener('DOMContentLoaded', () => {
 .np-upload .plus{font-size:26px;line-height:1;font-weight:300}
 .np-foot{display:flex;align-items:center;justify-content:flex-end;gap:12px;padding:14px 26px;border-top:1px solid var(--border-light);flex-shrink:0}
 .np-foot .btn-default,.np-foot .btn-primary{height:36px;padding:0 20px;font-size:15px}
+.np-foot .btn-primary[disabled],.np-foot .btn-default[disabled]{opacity:.6;cursor:not-allowed}
+/* 二次确认弹窗（危险操作）：复用 .np-* 骨架，窄窗、高度自适应、垂直水平居中 */
+.np-dialog.np-cf{width:min(460px,calc(100vw - 48px));height:auto;top:50%;transform:translate(-50%,-50%)}
+.np-cf-body{padding:18px 26px 6px;font-size:15px;line-height:1.7;color:var(--text-secondary)}
+.np-cf-body b{color:var(--text);font-weight:600}
+.np-cf-body .warn{color:#ff4d4f}
+.btn-danger{height:36px;padding:0 20px;background:#ff4d4f;color:#fff;border:1px solid #ff4d4f;border-radius:var(--radius-md);font-size:15px;cursor:pointer;transition:background .2s,border-color .2s}
+.btn-danger:hover{background:#ff7875;border-color:#ff7875}
+.btn-danger[disabled]{opacity:.5;cursor:not-allowed;background:#ff4d4f}
 /* 必填未填：点确定后该字段区域红色高亮 */
 .np-field.np-invalid{background:rgba(255,77,79,.05);border-radius:var(--radius-md);padding-left:8px;padding-right:8px;border-bottom-color:rgba(255,77,79,.45)}
 .np-field.np-invalid .np-label{color:#ff4d4f}
@@ -1602,9 +1617,13 @@ document.addEventListener('DOMContentLoaded', () => {
     var d = new Date(), p = function(n){ return (n < 10 ? '0' : '') + n; };
     return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
   }
-  /* 确定：必填校验通过 → 真实写入表格数据并重渲染（新卡片排在最前，状态=待审核） */
+  /* 确定：必填校验通过 → 真实写入表格数据并重渲染（新卡片排在最前，状态=待审核）
+     提交期间按钮禁用 + 文案「提交中…」，防重复提交 */
   window.submitNewProduct = function(){
     if (!validateRequired()) return;
+    var btn = document.querySelector('.np-foot .btn-primary');
+    if (btn) { if (btn.disabled) return; btn.disabled = true; btn.textContent = '提交中…'; }
+    window.setTimeout(function(){
     var v = collectValues();
     var unit = v.unit || '公制';
     var row = {
@@ -1637,14 +1656,83 @@ document.addEventListener('DOMContentLoaded', () => {
     renderStats(); renderTable(); renderPagination();
     build();
     window.closeNewProduct();
+    if (btn) { btn.disabled = false; btn.textContent = '确定'; }
     var first = document.querySelector('#tableBody tr.row-main');
     if (first && first.scrollIntoView) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 320);
   };
   document.getElementById('npClose').onclick = function(){ window.closeNewProduct(); };
   document.getElementById('npMask').onclick = function(){ window.closeNewProduct(); };
   document.addEventListener('keydown', function(e){ if (e.key === 'Escape') window.closeNewProduct(); });
 
   build();
+})();
+</script>
+<!-- ===================== 危险操作二次确认弹窗（废弃）：复用 .np-* 骨架 ===================== -->
+<div class="np-mask" id="cfMask"></div>
+<div class="np-dialog np-cf" id="cfDialog" role="dialog" aria-modal="true" aria-label="废弃商品">
+  <div class="np-head">
+    <span class="np-title">废弃商品</span>
+    <button class="np-close" id="cfClose" aria-label="关闭" title="关闭"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+  </div>
+  <div class="np-cf-body" id="cfBody"></div>
+  <div class="np-foot">
+    <button class="btn-default" onclick="closeWasteConfirm()">取消</button>
+    <button class="btn-danger" id="cfOk" onclick="confirmWaste()">废弃</button>
+  </div>
+</div>
+<script>
+/* ===== 危险操作二次确认：废弃（未勾选 → 提示且禁用「废弃」；确认后真实置为「已废弃」并同步统计） ===== */
+(function(){
+  var mask = document.getElementById('cfMask'), dlg = document.getElementById('cfDialog');
+  function selectedCodes(){
+    var out = [];
+    Array.prototype.forEach.call(document.querySelectorAll('#tableBody tr.row-main'), function(tr){
+      var cb = tr.querySelector('input[type=checkbox]');
+      if (cb && cb.checked) {
+        var c = tr.getAttribute('data-code');
+        if (c) out.push(c);
+      }
+    });
+    return out;
+  }
+  window.openWasteConfirm = function(){
+    var codes = selectedCodes(), body = document.getElementById('cfBody'), ok = document.getElementById('cfOk');
+    if (!codes.length) {
+      body.innerHTML = '<div class="warn">请先勾选要废弃的商品。</div><div>废弃后该商品不参与业务，且不可恢复。</div>';
+      ok.disabled = true;
+    } else {
+      body.innerHTML = '已选择 <b>' + codes.length + '</b> 个商品，确定废弃？<div class="warn">废弃后不参与业务，且不可恢复。</div>';
+      ok.disabled = false;
+    }
+    mask.classList.add('open');
+    dlg.classList.add('open');
+  };
+  window.closeWasteConfirm = function(){
+    mask.classList.remove('open');
+    dlg.classList.remove('open');
+  };
+  window.confirmWaste = function(){
+    var codes = selectedCodes();
+    if (!codes.length) return;
+    var moved = 0, from = {};
+    codes.forEach(function(c){
+      var row = null;
+      for (var i = 0; i < TABLE_DATA.length; i++) { if (TABLE_DATA[i].code === c) { row = TABLE_DATA[i]; break; } }
+      if (row && row.status !== '已废弃') { from[row.status] = (from[row.status] || 0) + 1; row.status = '已废弃'; moved += 1; }
+    });
+    if (moved) {
+      STATS.forEach(function(s){
+        if (s.label === '已废弃') s.num += moved;
+        else if (from[s.label]) s.num -= from[s.label];
+      });
+    }
+    window.closeWasteConfirm();
+    renderStats(); renderTable(); renderPagination();
+  };
+  document.getElementById('cfClose').onclick = function(){ window.closeWasteConfirm(); };
+  mask.onclick = function(){ window.closeWasteConfirm(); };
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape') window.closeWasteConfirm(); });
 })();
 </script>
 </body>
