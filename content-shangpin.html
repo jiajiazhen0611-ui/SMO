@@ -1279,7 +1279,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <style>
 .np-mask{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:600;display:none}
 .np-mask.open{display:block}
-.np-dialog{position:fixed;left:50%;top:50%;transform:translate(-50%,-56%);width:min(1340px,calc(100vw - 56px));height:min(90vh,880px);background:#fff;border-radius:var(--radius-lg);box-shadow:0 16px 48px rgba(0,0,0,.22);z-index:601;display:none;flex-direction:column;overflow:hidden}
+.np-dialog{position:fixed;left:50%;top:20px;transform:translateX(-50%);width:min(1340px,calc(100vw - 56px));height:min(calc(100vh - 40px),880px);background:#fff;border-radius:var(--radius-lg);box-shadow:0 16px 48px rgba(0,0,0,.22);z-index:601;display:none;flex-direction:column;overflow:hidden}
 .np-dialog.open{display:flex}
 .np-head{display:flex;align-items:center;gap:12px;padding:20px 26px 16px;border-bottom:1px solid var(--border-light);flex-shrink:0}
 .np-title{font-size:20px;font-weight:600;color:var(--text)}
@@ -1310,7 +1310,7 @@ document.addEventListener('DOMContentLoaded', () => {
 .np-input{width:100%;height:36px;border:none;background:transparent;padding:0;font-size:15px;color:var(--text);outline:none;transition:box-shadow .2s}
 .np-input::placeholder{color:var(--text-quaternary)}
 .np-input:focus{box-shadow:inset 0 -1px 0 var(--primary)}
-.np-textarea{height:84px;resize:vertical;line-height:1.6;padding-top:4px}
+.np-textarea{height:88px;resize:vertical;line-height:1.6;padding-top:4px}
 .np-count{font-size:13px;color:var(--text-quaternary);text-align:right}
 .np-inline{display:flex;align-items:center;gap:10px;width:100%}
 .np-inline .np-input{flex:1;min-width:0}
@@ -1454,8 +1454,10 @@ document.addEventListener('DOMContentLoaded', () => {
   function fieldHtml(f){
     if (f.type === 'blank') return '<div class="np-field"></div>';
     var label = f.label ? '<div class="np-label">' + (f.req ? '<span class="req">*</span>' : '') + f.label + '</div>' : '';
+    /* 描述类（textarea）一律单独占满一整行 */
+    var full = (f.span2 || f.type === 'textarea');
     var attrs = (f.req ? ' data-req="1"' : '') + (f.type ? ' data-kind="' + f.type + '"' : '');
-    return '<div class="np-field' + (f.span2 ? ' span2' : '') + '"' + attrs + '>' + label + ctrlHtml(f) + '</div>';
+    return '<div class="np-field' + (full ? ' span2' : '') + '"' + attrs + '>' + label + ctrlHtml(f) + '</div>';
   }
 
   function build(){
