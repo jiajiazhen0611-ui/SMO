@@ -1279,7 +1279,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <style>
 .np-mask{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:600;display:none}
 .np-mask.open{display:block}
-.np-dialog{position:fixed;left:24px;top:50%;transform:translateY(-50%);width:min(1340px,calc(100vw - 56px));height:min(calc(100vh - 48px),880px);background:#fff;border-radius:var(--radius-lg);box-shadow:0 16px 48px rgba(0,0,0,.22);z-index:601;display:none;flex-direction:column;overflow:hidden}
+.np-dialog{position:fixed;left:50%;top:64px;transform:translateX(-50%);width:min(1340px,calc(100vw - 56px));height:min(calc(100vh - 48px),880px);background:#fff;border-radius:var(--radius-lg);box-shadow:0 16px 48px rgba(0,0,0,.22);z-index:601;display:none;flex-direction:column;overflow:hidden}
 .np-dialog.open{display:flex}
 .np-head{display:flex;align-items:center;gap:12px;padding:20px 26px 16px;border-bottom:1px solid var(--border-light);flex-shrink:0}
 .np-title{font-size:20px;font-weight:600;color:var(--text)}
@@ -1543,14 +1543,15 @@ document.addEventListener('DOMContentLoaded', () => {
   window.openNewProduct = function(){
     document.getElementById('npMask').classList.add('open');
     dlg.classList.add('open');
-    /* 水平位置对齐「添加」按钮（= 卡片区左缘）；右侧超出视口时整体左收，保证完整可见 */
+    /* 顶边与「添加」按钮在同一条水平线上（高度对齐）；左右居中；高度自适应不出屏 */
     var btn = document.querySelector('.table-toolbar .toolbar-btn');
     if (btn) {
-      var r = btn.getBoundingClientRect();
-      var w = dlg.getBoundingClientRect().width || dlg.offsetWidth || 1340;
-      var left = Math.max(8, Math.round(r.left));
-      if (left + w > window.innerWidth - 8) left = Math.max(8, Math.round(window.innerWidth - 8 - w));
-      dlg.style.left = left + 'px';
+      var r = btn.getBoundingClientRect(), vh = window.innerHeight;
+      var top = Math.round(r.top);
+      if (top < 8) top = 8;
+      if (top > vh - 480) top = Math.max(8, vh - 480);
+      dlg.style.top = top + 'px';
+      dlg.style.height = Math.min(880, Math.max(420, vh - top - 16)) + 'px';
     }
     main.scrollTop = 0;
     setActiveStep(NP[0].id);
