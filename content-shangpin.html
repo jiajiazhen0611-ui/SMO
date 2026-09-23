@@ -244,8 +244,8 @@
   .toolbar-btn{height:30px;padding:0 12px;background:var(--primary);color:#fff;border:1px solid var(--primary);border-radius:var(--radius-md);font-size:13px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;transition:background .2s,border-color .2s,color .2s}
 .toolbar-btn:hover{background:var(--primary-hover);border-color:var(--primary-hover)}
 /* 二级按钮：打印条码 / 导入 / 导出 */
-.toolbar-btn-barcode,.toolbar-btn-import,.toolbar-btn-export{background:#fff;color:var(--text-secondary);border:1px solid var(--border)}
-.toolbar-btn-barcode:hover,.toolbar-btn-import:hover,.toolbar-btn-export:hover{background:#fff;border-color:var(--primary);color:var(--primary)}
+.toolbar-btn-secondary{background:#fff;color:var(--text-secondary);border:1px solid var(--border)}
+.toolbar-btn-secondary:hover{background:#fff;border-color:var(--primary);color:var(--primary)}
 /* 危险按钮：废弃 */
 .toolbar-btn-danger{background:#fff;color:#ff4d4f;border:1px solid rgba(255,77,79,.45)}
 .toolbar-btn-danger:hover{background:#ff4d4f;border-color:#ff4d4f;color:#fff}
@@ -439,15 +439,15 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
           添加
         </button>
-        <button class="toolbar-btn toolbar-btn-barcode">
+        <button class="toolbar-btn toolbar-btn-secondary">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6"/><path d="M6 18H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-1"/><rect x="6" y="14" width="12" height="7" rx="1"/></svg>
           打印条码
         </button>
-        <button class="toolbar-btn toolbar-btn-import">
+        <button class="toolbar-btn toolbar-btn-secondary">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           导入
         </button>
-        <button class="toolbar-btn toolbar-btn-export">
+        <button class="toolbar-btn toolbar-btn-secondary">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           导出
         </button>
@@ -1705,13 +1705,22 @@ document.addEventListener('DOMContentLoaded', () => {
       body.innerHTML = '已选择 <b>' + codes.length + '</b> 个商品，确定废弃？<div class="warn">废弃后不参与业务，且不可恢复。</div>';
       ok.disabled = false;
     }
+    /* 位置：水平居中 + 顶边与「废弃」按钮在同一条水平线（与表单弹窗同款规则），保证落在可视区、不偏下 */
+    var btn = document.querySelector('.toolbar-btn-danger');
+    if (btn) {
+      var r = btn.getBoundingClientRect(), vh = window.innerHeight;
+      var top = Math.round(r.top);
+      if (top < 12) top = 12;
+      if (top > vh - 220) top = Math.max(12, vh - 220);
+      dlg.style.transform = 'translateX(-50%)';   /* 顶边对齐（去掉垂直位移），与表单弹窗同款 */
+      dlg.style.top = top + 'px';
+    }
     mask.classList.add('open');
     dlg.classList.add('open');
   };
   window.closeWasteConfirm = function(){
     mask.classList.remove('open');
-    dlg.classList.remove('open');
-  };
+    dlg.classList.remove('open');  };
   window.confirmWaste = function(){
     var codes = selectedCodes();
     if (!codes.length) return;
