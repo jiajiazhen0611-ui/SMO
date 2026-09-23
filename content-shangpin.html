@@ -630,7 +630,7 @@ const TABLE_DATA = [
   { code:'SKU005', sku:'SKU005', customCode:'CUSTOM-005', platformCode:'AMZ-CA', cnName:'折叠雨伞', enName:'Compact Folding Umbrella', cnDeclare:'折叠伞', enDeclare:'Folding Umbrella', category:'户外用品', size:'5 * 5 * 28 公制', weight:'0.4 公制', value:'12 USD', creator:'support-1@lc-worldwide.com', createTime:'2026-08-25 16:20:10', modifier:'support-1@lc-worldwide.com', modifyTime:'2026-08-25 16:20:10', status:'已废弃', remark:'—', auditRemark:'—' },
   { code:'SKU006', sku:'SKU006', customCode:'CUSTOM-006', platformCode:'EBAY-UK', cnName:'帆布双肩包', enName:'Canvas Backpack', cnDeclare:'帆布包', enDeclare:'Canvas Bag', category:'箱包', size:'30 * 15 * 45 公制', weight:'0.9 公制', value:'35 USD', creator:'support-2@lc-worldwide.com', createTime:'2026-08-28 11:05:30', modifier:'support-2@lc-worldwide.com', modifyTime:'2026-08-28 11:05:30', status:'待审核', remark:'—', auditRemark:'—' },
 ];
-const TOTAL = 109, PAGE_SIZE = 20, TOTAL_PAGES = Math.ceil(TOTAL / PAGE_SIZE);
+let TOTAL = 109, PAGE_SIZE = 20, TOTAL_PAGES = Math.ceil(TOTAL / PAGE_SIZE);   /* 新增商品后需可自增，故用 let */
 
 /* ============ 渲染函数 ============ */
 function renderStats(){
@@ -1279,7 +1279,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <style>
 .np-mask{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:600;display:none}
 .np-mask.open{display:block}
-.np-dialog{position:fixed;left:50%;top:20px;transform:translateX(-50%);width:min(1340px,calc(100vw - 56px));height:min(calc(100vh - 40px),880px);background:#fff;border-radius:var(--radius-lg);box-shadow:0 16px 48px rgba(0,0,0,.22);z-index:601;display:none;flex-direction:column;overflow:hidden}
+.np-dialog{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(1340px,calc(100vw - 56px));height:min(calc(100vh - 48px),880px);background:#fff;border-radius:var(--radius-lg);box-shadow:0 16px 48px rgba(0,0,0,.22);z-index:601;display:none;flex-direction:column;overflow:hidden}
 .np-dialog.open{display:flex}
 .np-head{display:flex;align-items:center;gap:12px;padding:20px 26px 16px;border-bottom:1px solid var(--border-light);flex-shrink:0}
 .np-title{font-size:20px;font-weight:600;color:var(--text)}
@@ -1310,8 +1310,8 @@ document.addEventListener('DOMContentLoaded', () => {
 .np-input{width:100%;height:36px;border:none;background:transparent;padding:0;font-size:15px;color:var(--text);outline:none;transition:box-shadow .2s}
 .np-input::placeholder{color:var(--text-quaternary)}
 .np-input:focus{box-shadow:inset 0 -1px 0 var(--primary)}
-.np-textarea{height:88px;resize:vertical;line-height:1.6;padding-top:4px}
-.np-count{font-size:13px;color:var(--text-quaternary);text-align:right}
+.np-textarea{display:block;height:88px;resize:vertical;line-height:1.6;padding-top:4px}
+.np-count{font-size:13px;line-height:1.4;color:var(--text-quaternary);text-align:right;margin-top:-2px}
 .np-inline{display:flex;align-items:center;gap:10px;width:100%}
 .np-inline .np-input{flex:1;min-width:0}
 .np-x{color:var(--text-tertiary);font-size:14px;flex-shrink:0}
@@ -1374,43 +1374,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
   var NP = [
     { num: '01', id: 'np-basic', cn: '基础信息', en: 'BASIC INFORMATION', fields: [
-      { label: '客户', req: true, type: 'dd', ph: '请选择', opts: ['客户 A（演示）', '客户 B（演示）'] },
-      { label: 'SKU', req: true, type: 'text', ph: '请输入' },
-      { label: '品类', req: true, type: 'dd', ph: '请选择', opts: ['一级品类 / 摩托', '一级品类 / 家居', '一级品类 / 数码'] },
-      { label: '条码', type: 'text', ph: '请输入' },
-      { label: '商品名称', req: true, type: 'text', ph: '请输入' },
-      { label: '商品名称 EN', req: true, type: 'text', ph: '请输入' },
-      { label: '自定义编码', type: 'text', ph: '请输入' },
-      { label: '平台编码', type: 'text', ph: '请输入' },
-      { label: '关联商品编码', type: 'text', ph: '请输入' },
-      { label: '商品描述', type: 'textarea', ph: '请输入商品描述', max: 500 }
+      { key: 'customer', label: '客户', req: true, type: 'dd', ph: '请选择', opts: ['客户 A（演示）', '客户 B（演示）'] },
+      { key: 'sku', label: 'SKU', req: true, type: 'text', ph: '请输入' },
+      { key: 'category', label: '品类', req: true, type: 'dd', ph: '请选择', opts: ['一级品类 / 摩托', '一级品类 / 家居', '一级品类 / 数码'] },
+      { key: 'barcode', label: '条码', type: 'text', ph: '请输入' },
+      { key: 'cnName', label: '商品名称', req: true, type: 'text', ph: '请输入' },
+      { key: 'enName', label: '商品名称 EN', req: true, type: 'text', ph: '请输入' },
+      { key: 'customCode', label: '自定义编码', type: 'text', ph: '请输入' },
+      { key: 'platformCode', label: '平台编码', type: 'text', ph: '请输入' },
+      { key: 'relCode', label: '关联商品编码', type: 'text', ph: '请输入' },
+      { key: 'desc', label: '商品描述', type: 'textarea', ph: '请输入商品描述', max: 500 }
     ]},
     { num: '02', id: 'np-spec', cn: '商品规格', en: 'PRODUCT SPECIFICATIONS', fields: [
-      { label: '单位', req: true, type: 'seg', opts: ['公制', '英制'], active: 0 },
-      { label: '毛重', req: true, type: 'num', ph: '(KG)', unit: 'KG' },
-      { label: '净重', type: 'num', ph: '(KG)', unit: 'KG' },
-      { label: '尺寸（长 × 宽 × 高）', req: true, type: 'dims', unit: 'CM' },
-      { label: '是否含电池', type: 'seg', opts: ['是', '否'], active: 1 },
-      { label: '是否液体', type: 'seg', opts: ['是', '否'], active: 1 },
-      { label: '是否带电', type: 'seg', opts: ['是', '否'], active: 1 },
-      { label: '是否时钟', type: 'seg', opts: ['是', '否'], active: 1 }
+      { key: 'unit', label: '单位', req: true, type: 'seg', opts: ['公制', '英制'], active: 0 },
+      { key: 'grossWeight', label: '毛重', req: true, type: 'num', ph: '(KG)', unit: 'KG' },
+      { key: 'netWeight', label: '净重', type: 'num', ph: '(KG)', unit: 'KG' },
+      { key: 'dims', label: '尺寸（长 × 宽 × 高）', req: true, type: 'dims', unit: 'CM' },
+      { key: 'battery', label: '是否含电池', type: 'seg', opts: ['是', '否'], active: 1 },
+      { key: 'liquid', label: '是否液体', type: 'seg', opts: ['是', '否'], active: 1 },
+      { key: 'charged', label: '是否带电', type: 'seg', opts: ['是', '否'], active: 1 },
+      { key: 'clock', label: '是否时钟', type: 'seg', opts: ['是', '否'], active: 1 }
     ]},
     { num: '03', id: 'np-decl', cn: '申报信息', en: 'DECLARATION INFORMATION', fields: [
-      { label: '物流申报品名', type: 'text', ph: '请输入' },
-      { label: '报关货物品名', type: 'text', ph: '请输入' },
-      { label: '申报货值', req: true, type: 'text', ph: '请输入' },
-      { label: '申报币种', req: true, type: 'dd', ph: '请选择', opts: ['USD', 'EUR', 'CNY', 'GBP'] },
-      { label: '品牌', type: 'text', ph: '请输入' },
-      { label: '型号', type: 'text', ph: '请输入' },
-      { label: '原产国', type: 'dd', ph: '请选择', opts: ['中国', '美国', '越南', '印度'] },
-      { label: '原产地', type: 'text', ph: '请输入' },
-      { label: '中文材质', type: 'text', ph: '请输入' },
-      { label: '英文材质', type: 'text', ph: '请输入' },
-      { label: '商品用途', type: 'text', ph: '请输入' },
-      { label: '商品信息链接', type: 'text', ph: '请输入' },
-      { label: '海关编码', type: 'text', ph: '请输入' },
-      { label: '零售价', type: 'text', ph: '请输入' },
-      { label: '税率', type: 'text', ph: '请输入', unit: '%' }
+      { key: 'cnDeclare', label: '物流申报品名', type: 'text', ph: '请输入' },
+      { key: 'enDeclare', label: '报关货物品名', type: 'text', ph: '请输入' },
+      { key: 'declaredValue', label: '申报货值', req: true, type: 'text', ph: '请输入' },
+      { key: 'currency', label: '申报币种', req: true, type: 'dd', ph: '请选择', opts: ['USD', 'EUR', 'CNY', 'GBP'] },
+      { key: 'brand', label: '品牌', type: 'text', ph: '请输入' },
+      { key: 'model', label: '型号', type: 'text', ph: '请输入' },
+      { key: 'originCountry', label: '原产国', type: 'dd', ph: '请选择', opts: ['中国', '美国', '越南', '印度'] },
+      { key: 'originPlace', label: '原产地', type: 'text', ph: '请输入' },
+      { key: 'materialCn', label: '中文材质', type: 'text', ph: '请输入' },
+      { key: 'materialEn', label: '英文材质', type: 'text', ph: '请输入' },
+      { key: 'usage', label: '商品用途', type: 'text', ph: '请输入' },
+      { key: 'link', label: '商品信息链接', type: 'text', ph: '请输入' },
+      { key: 'hsCode', label: '海关编码', type: 'text', ph: '请输入' },
+      { key: 'retailPrice', label: '零售价', type: 'text', ph: '请输入' },
+      { key: 'taxRate', label: '税率', type: 'text', ph: '请输入', unit: '%' }
     ]},
     { num: '04', id: 'np-img', cn: '商品图片', en: 'PRODUCT IMAGE', fields: [
       { type: 'upload' }
@@ -1456,7 +1456,7 @@ document.addEventListener('DOMContentLoaded', () => {
     var label = f.label ? '<div class="np-label">' + (f.req ? '<span class="req">*</span>' : '') + f.label + '</div>' : '';
     /* 描述类（textarea）一律单独占满一整行 */
     var full = (f.span2 || f.type === 'textarea');
-    var attrs = (f.req ? ' data-req="1"' : '') + (f.type ? ' data-kind="' + f.type + '"' : '');
+    var attrs = (f.req ? ' data-req="1"' : '') + (f.type ? ' data-kind="' + f.type + '"' : '') + (f.key ? ' data-key="' + f.key + '"' : '');
     return '<div class="np-field' + (full ? ' span2' : '') + '"' + attrs + '>' + label + ctrlHtml(f) + '</div>';
   }
 
@@ -1568,7 +1568,68 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     return !firstBad;
   }
-  window.submitNewProduct = function(){ if (validateRequired()) window.closeNewProduct(); };
+  /* 收集表单值（按字段 key） */
+  function collectValues(){
+    var out = {};
+    Array.prototype.forEach.call(main.querySelectorAll('.np-field[data-key]'), function(el){
+      var k = el.getAttribute('data-key'), kind = el.getAttribute('data-kind'), v = '';
+      if (kind === 'dd') {
+        v = el.querySelector('.np-dd.has-value') ? el.querySelector('.np-dd-label').textContent.trim() : '';
+      } else if (kind === 'seg') {
+        var a = el.querySelector('.np-seg-item.active');
+        v = a ? a.textContent.trim() : '';
+      } else if (kind === 'dims') {
+        v = Array.prototype.map.call(el.querySelectorAll('.np-input'), function(i){ return i.value.trim(); }).filter(Boolean).join(' * ');
+      } else {
+        var inp = el.querySelector('.np-input');
+        v = inp ? inp.value.trim() : '';
+      }
+      out[k] = v;
+    });
+    return out;
+  }
+  function nowStr(){
+    var d = new Date(), p = function(n){ return (n < 10 ? '0' : '') + n; };
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+  }
+  /* 确定：必填校验通过 → 真实写入表格数据并重渲染（新卡片排在最前，状态=待审核） */
+  window.submitNewProduct = function(){
+    if (!validateRequired()) return;
+    var v = collectValues();
+    var unit = v.unit || '公制';
+    var row = {
+      code: v.sku || ('SKU' + String(TABLE_DATA.length + 1).padStart(3, '0')),
+      sku: v.sku || '—',
+      customCode: v.customCode || '—',
+      platformCode: v.platformCode || '—',
+      cnName: v.cnName || '—',
+      enName: v.enName || '—',
+      cnDeclare: v.cnDeclare || '—',
+      enDeclare: v.enDeclare || '—',
+      category: v.category || '—',
+      size: v.dims ? (v.dims + ' ' + unit) : '—',
+      weight: v.grossWeight ? (v.grossWeight + ' ' + unit) : '—',
+      value: v.declaredValue ? (v.declaredValue + (v.currency ? ' ' + v.currency : '')) : '—',
+      creator: 'support-1@lc-worldwide.com',
+      createTime: nowStr(),
+      modifier: 'support-1@lc-worldwide.com',
+      modifyTime: nowStr(),
+      status: '待审核',
+      remark: v.desc || '—',
+      auditRemark: '—'
+    };
+    TABLE_DATA.unshift(row);
+    TOTAL += 1;
+    TOTAL_PAGES = Math.ceil(TOTAL / PAGE_SIZE);
+    STATS.forEach(function(s){ if (s.label === '全部' || s.label === row.status) s.num += 1; });
+    currentStatus = '全部';
+    currentPage = 1;
+    renderStats(); renderTable(); renderPagination();
+    build();
+    window.closeNewProduct();
+    var first = document.querySelector('#tableBody tr.row-main');
+    if (first && first.scrollIntoView) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
   document.getElementById('npClose').onclick = function(){ window.closeNewProduct(); };
   document.getElementById('npMask').onclick = function(){ window.closeNewProduct(); };
   document.addEventListener('keydown', function(e){ if (e.key === 'Escape') window.closeNewProduct(); });
