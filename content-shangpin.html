@@ -429,7 +429,7 @@
   <div class="table-panel" data-proto-id="4">
     <div class="table-toolbar" data-proto-id="3">
       <div class="toolbar-left">
-        <button class="toolbar-btn">
+        <button class="toolbar-btn" onclick="openNewProduct()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
           添加
         </button>
@@ -1273,6 +1273,272 @@ document.addEventListener('DOMContentLoaded', () => {
     window.highlightPin = function(){};
     window.clearPinHighlight = function(){};
   }catch(e){}
+})();
+</script>
+<!-- ===================== 新建商品弹窗（商品管理 · 添加；样式按评审截图：无边框字段 + 行间虚线分隔） ===================== -->
+<style>
+.np-mask{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:600;display:none}
+.np-mask.open{display:block}
+.np-dialog{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(1000px,calc(100vw - 48px));height:min(86vh,780px);background:#fff;border-radius:var(--radius-lg);box-shadow:0 16px 48px rgba(0,0,0,.22);z-index:601;display:none;flex-direction:column;overflow:hidden}
+.np-dialog.open{display:flex}
+.np-head{display:flex;align-items:center;gap:12px;padding:18px 24px 14px;border-bottom:1px solid var(--border-light);flex-shrink:0}
+.np-title{font-size:17px;font-weight:600;color:var(--text)}
+.np-hint{margin-left:auto;font-size:12.5px;color:var(--text-tertiary)}
+.np-close{width:30px;height:30px;border:none;background:none;color:var(--text-tertiary);border-radius:var(--radius-md);display:grid;place-items:center;cursor:pointer;transition:background .15s,color .15s}
+.np-close:hover{background:var(--bg);color:var(--text)}
+.np-body{flex:1;display:flex;min-height:0}
+.np-side{width:152px;flex-shrink:0;padding:14px 10px;overflow-y:auto;border-right:1px solid var(--border-light)}
+.np-side-title{font-size:12px;color:var(--text-tertiary);padding:2px 10px 10px}
+.np-step{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--radius-md);font-size:13px;color:var(--text-secondary);cursor:pointer;transition:background .15s,color .15s;white-space:nowrap}
+.np-step:hover{background:var(--bg)}
+.np-step.active{background:var(--primary-bg,rgba(22,119,255,.06));color:var(--primary);font-weight:500}
+.np-step .num{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:18px;padding:0 4px;border-radius:4px;background:var(--bg);color:var(--text-tertiary);font-size:11px;font-weight:600;flex-shrink:0}
+.np-step.active .num{background:var(--primary);color:#fff}
+.np-main{flex:1;min-width:0;overflow-y:auto;padding:4px 24px 20px}
+.np-sec-head{display:flex;align-items:center;gap:8px;padding:18px 0 8px}
+.np-sec-icon{width:20px;height:20px;color:var(--primary);flex-shrink:0}
+.np-sec-cn{font-size:14.5px;font-weight:600;color:var(--text);line-height:1.2}
+.np-sec-en{font-size:10px;letter-spacing:.5px;color:var(--text-quaternary);text-transform:uppercase;margin-top:3px}
+.np-grid{display:grid;grid-template-columns:1fr 1fr;column-gap:40px}
+.np-field{display:flex;flex-direction:column;gap:4px;padding:10px 0;border-bottom:1px dotted #e3e5e8;min-width:0}
+.np-field.span2{grid-column:1 / -1}
+.np-group{grid-column:1 / -1;display:grid;column-gap:40px}
+.np-label{font-size:12.5px;color:var(--text-secondary);display:flex;align-items:center;gap:3px}
+.np-label .req{color:#ff4d4f;line-height:1}
+.np-input{width:100%;height:32px;border:none;background:transparent;padding:0;font-size:13.5px;color:var(--text);outline:none;transition:box-shadow .2s}
+.np-input::placeholder{color:var(--text-quaternary)}
+.np-input:focus{box-shadow:inset 0 -1px 0 var(--primary)}
+.np-textarea{height:76px;resize:vertical;line-height:1.6;padding-top:2px}
+.np-count{font-size:12px;color:var(--text-quaternary);text-align:right}
+.np-inline{display:flex;align-items:center;gap:8px;width:100%}
+.np-inline .np-input{flex:1;min-width:0}
+.np-x{color:var(--text-tertiary);font-size:13px;flex-shrink:0}
+.np-unit{color:var(--text-tertiary);font-size:12.5px;flex-shrink:0}
+.np-dd{position:relative;display:flex;align-items:center;height:32px;cursor:pointer;user-select:none;font-size:13.5px}
+.np-dd-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-quaternary)}
+.np-dd.has-value .np-dd-label{color:var(--text)}
+.np-dd-arrow{display:grid;place-items:center;color:#4e5969;transition:transform .15s,color .15s;flex-shrink:0}
+.np-dd-arrow svg{width:12px;height:12px;display:block}
+.np-dd.open .np-dd-arrow{transform:rotate(180deg);color:var(--primary)}
+.np-dd-list{position:absolute;top:calc(100% + 4px);left:0;min-width:100%;background:#fff;border:1px solid var(--border-light);border-radius:var(--radius-md);box-shadow:var(--shadow-dropdown);z-index:620;display:none;padding:4px 0;max-height:220px;overflow-y:auto}
+.np-dd.open .np-dd-list{display:block}
+.np-dd-item{padding:7px 14px;font-size:13.5px;color:var(--text);cursor:pointer;white-space:nowrap}
+.np-dd-item:hover{background:var(--bg)}
+.np-dd-item.active{color:var(--primary);background:var(--primary-bg,rgba(22,119,255,.06))}
+.np-seg{display:flex;align-items:center;gap:6px}
+.np-seg-item{height:30px;padding:0 14px;border:1px solid var(--border);border-radius:var(--radius-md);background:#fff;color:var(--text-secondary);font-size:13px;cursor:pointer;transition:all .15s}
+.np-seg-item:hover{border-color:var(--primary);color:var(--primary)}
+.np-seg-item.active{background:var(--primary);border-color:var(--primary);color:#fff}
+.np-upload{width:104px;height:104px;border:1px dashed var(--border);border-radius:var(--radius-md);background:#fafbfc;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--text-tertiary);font-size:12.5px;cursor:pointer;transition:border-color .2s,color .2s}
+.np-upload:hover{border-color:var(--primary);color:var(--primary)}
+.np-upload .plus{font-size:22px;line-height:1;font-weight:300}
+.np-foot{display:flex;align-items:center;justify-content:flex-end;gap:10px;padding:12px 24px;border-top:1px solid var(--border-light);flex-shrink:0}
+</style>
+
+<div class="np-mask" id="npMask"></div>
+<div class="np-dialog" id="npDialog" role="dialog" aria-modal="true" aria-label="新建商品">
+  <div class="np-head">
+    <span class="np-title">新建商品</span>
+    <span class="np-hint">请按单号录入商品信息</span>
+    <button class="np-close" id="npClose" aria-label="关闭"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+  </div>
+  <div class="np-body">
+    <div class="np-side">
+      <div class="np-side-title">商品清单</div>
+      <div id="npSteps"></div>
+    </div>
+    <div class="np-main" id="npMain"></div>
+  </div>
+  <div class="np-foot">
+    <button class="btn-default" onclick="closeNewProduct()">取消</button>
+    <button class="btn-primary" onclick="closeNewProduct()">确定</button>
+  </div>
+</div>
+
+<script>
+/* ===== 新建商品弹窗：结构取自评审截图（左 4 步 / 右 4 分区），下拉一律用自定义 .np-dd（LC-OMS 禁原生 select） ===== */
+(function(){
+  var SEC_ICON = '<svg class="np-sec-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.2"/></svg>';
+  var CHEV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
+
+  var NP = [
+    { num: '01', id: 'np-basic', cn: '基础信息', en: 'BASIC INFORMATION', fields: [
+      { label: '客户', req: true, type: 'dd', ph: '请选择', opts: ['客户 A（演示）', '客户 B（演示）'] },
+      { label: 'SKU', req: true, type: 'text', ph: '请输入' },
+      { label: '品类', req: true, type: 'dd', ph: '请选择', opts: ['一级品类 / 摩托', '一级品类 / 家居', '一级品类 / 数码'] },
+      { label: '条码', type: 'text', ph: '请输入' },
+      { label: '商品名称', req: true, type: 'text', ph: '请输入' },
+      { label: '商品名称 EN', req: true, type: 'text', ph: '请输入' },
+      { label: '自定义编码', type: 'text', ph: '请输入' },
+      { label: '平台编码', type: 'text', ph: '请输入' },
+      { label: '关联商品编码', type: 'text', ph: '请输入' },
+      { label: '商品描述', type: 'textarea', ph: '请输入商品描述', span2: true, max: 500 }
+    ]},
+    { num: '02', id: 'np-spec', cn: '商品规格', en: 'PRODUCT SPECIFICATIONS', fields: [
+      { label: '单位', req: true, type: 'seg', opts: ['公制', '英制'], active: 0 },
+      { type: 'blank' },
+      { label: '毛重', req: true, type: 'num', ph: '(KG)', unit: 'KG' },
+      { label: '净重', type: 'num', ph: '(KG)', unit: 'KG' },
+      { label: '尺寸（长 × 宽 × 高）', req: true, type: 'dims', unit: 'CM' },
+      { label: '是否含电池', type: 'seg', opts: ['是', '否'], active: 1 },
+      { group: true, cols: 3, fields: [
+        { label: '是否液体', type: 'seg', opts: ['是', '否'], active: 1 },
+        { label: '是否带电', type: 'seg', opts: ['是', '否'], active: 1 },
+        { label: '是否时钟', type: 'seg', opts: ['是', '否'], active: 1 }
+      ]}
+    ]},
+    { num: '03', id: 'np-decl', cn: '申报信息', en: 'DECLARATION INFORMATION', fields: [
+      { label: '物流申报品名', type: 'text', ph: '请输入' },
+      { label: '报关货物品名', type: 'text', ph: '请输入' },
+      { label: '申报货值', req: true, type: 'text', ph: '请输入' },
+      { label: '申报币种', req: true, type: 'dd', ph: '请选择', opts: ['USD', 'EUR', 'CNY', 'GBP'] },
+      { label: '品牌', type: 'text', ph: '请输入' },
+      { label: '型号', type: 'text', ph: '请输入' },
+      { label: '原产国', type: 'dd', ph: '请选择', opts: ['中国', '美国', '越南', '印度'] },
+      { label: '原产地', type: 'text', ph: '请输入' },
+      { label: '中文材质', type: 'text', ph: '请输入' },
+      { label: '英文材质', type: 'text', ph: '请输入' },
+      { label: '商品用途', type: 'text', ph: '请输入' },
+      { label: '商品信息链接', type: 'text', ph: '请输入' },
+      { label: '海关编码', type: 'text', ph: '请输入' },
+      { label: '零售价', type: 'text', ph: '请输入' },
+      { label: '税率', type: 'text', ph: '请输入', unit: '%' }
+    ]},
+    { num: '04', id: 'np-img', cn: '商品图片', en: 'PRODUCT IMAGE', fields: [
+      { type: 'upload', span2: true }
+    ]}
+  ];
+
+  function ctrlHtml(f){
+    var ph = f.ph || '请输入';
+    if (f.type === 'dd') {
+      var items = (f.opts || []).map(function(o){ return '<div class="np-dd-item" data-v="' + o + '">' + o + '</div>'; }).join('');
+      return '<div class="np-dd"><span class="np-dd-label">' + ph + '</span><span class="np-dd-arrow">' + CHEV + '</span><div class="np-dd-list">' + items + '</div></div>';
+    }
+    if (f.type === 'seg') {
+      return '<div class="np-seg">' + (f.opts || ['是', '否']).map(function(o, i){
+        return '<button type="button" class="np-seg-item' + (i === (f.active || 0) ? ' active' : '') + '">' + o + '</button>';
+      }).join('') + '</div>';
+    }
+    if (f.type === 'dims') {
+      return '<div class="np-inline">' +
+        '<input class="np-input" aria-label="长" />' +
+        '<span class="np-x">×</span>' +
+        '<input class="np-input" aria-label="宽" />' +
+        '<span class="np-x">×</span>' +
+        '<input class="np-input" aria-label="高" />' +
+        '<span class="np-unit">' + (f.unit || 'CM') + '</span></div>';
+    }
+    if (f.type === 'num') {
+      return '<div class="np-inline"><input class="np-input" placeholder="' + ph + '" /><span class="np-unit">' + (f.unit || '') + '</span></div>';
+    }
+    if (f.type === 'textarea') {
+      return '<textarea class="np-input np-textarea" maxlength="' + (f.max || 500) + '" placeholder="' + ph + '"></textarea>' +
+             '<div class="np-count">0 / ' + (f.max || 500) + '</div>';
+    }
+    if (f.type === 'upload') {
+      return '<div class="np-upload" title="上传商品图片（演示）"><span class="plus">+</span><span>上传</span></div>';
+    }
+    if (f.type === 'blank') return '';
+    return '<input class="np-input" placeholder="' + ph + '" />';
+  }
+
+  function fieldHtml(f){
+    if (f.type === 'blank') return '<div class="np-field"></div>';
+    var label = f.label ? '<div class="np-label">' + (f.req ? '<span class="req">*</span>' : '') + f.label + '</div>' : '';
+    return '<div class="np-field' + (f.span2 ? ' span2' : '') + '">' + label + ctrlHtml(f) + '</div>';
+  }
+
+  function build(){
+    var steps = '', main = '';
+    NP.forEach(function(s, i){
+      steps += '<div class="np-step' + (i === 0 ? ' active' : '') + '" data-target="' + s.id + '"><span class="num">' + s.num + '</span>' + s.cn + '</div>';
+      main += '<section class="np-sec" id="' + s.id + '"><div class="np-sec-head">' + SEC_ICON +
+        '<div><div class="np-sec-cn">' + s.cn + '</div><div class="np-sec-en">' + s.en + '</div></div></div><div class="np-grid">' +
+        (s.fields || []).map(function(f){
+          if (f.group) return '<div class="np-group" style="grid-template-columns:repeat(' + f.cols + ',1fr)">' + f.fields.map(fieldHtml).join('') + '</div>';
+          return fieldHtml(f);
+        }).join('') +
+        '</div></section>';
+    });
+    document.getElementById('npSteps').innerHTML = steps;
+    document.getElementById('npMain').innerHTML = main;
+  }
+
+  var dlg = document.getElementById('npDialog');
+  var main = document.getElementById('npMain');
+  var stepsBox = document.getElementById('npSteps');
+
+  function setActiveStep(id){
+    Array.prototype.forEach.call(stepsBox.querySelectorAll('.np-step'), function(s){
+      s.classList.toggle('active', s.getAttribute('data-target') === id);
+    });
+  }
+  function closeAllNpDd(){ Array.prototype.forEach.call(dlg.querySelectorAll('.np-dd.open'), function(d){ d.classList.remove('open'); }); }
+
+  stepsBox.addEventListener('click', function(e){
+    var st = e.target.closest('.np-step'); if (!st) return;
+    var id = st.getAttribute('data-target');
+    setActiveStep(id);
+    var sec = document.getElementById(id);
+    if (sec) main.scrollTop = Math.max(0, sec.offsetTop - 8);
+  });
+  main.addEventListener('scroll', function(){
+    var y = main.scrollTop + 40, cur = NP[0].id;
+    NP.forEach(function(s){ var el = document.getElementById(s.id); if (el && el.offsetTop <= y) cur = s.id; });
+    setActiveStep(cur);
+  });
+  dlg.addEventListener('click', function(e){
+    var seg = e.target.closest('.np-seg-item');
+    if (seg) {
+      Array.prototype.forEach.call(seg.parentNode.querySelectorAll('.np-seg-item'), function(b){ b.classList.remove('active'); });
+      seg.classList.add('active');
+      return;
+    }
+    var it = e.target.closest('.np-dd-item');
+    if (it) {
+      var box = it.closest('.np-dd');
+      box.querySelector('.np-dd-label').textContent = it.textContent;
+      box.classList.add('has-value');
+      Array.prototype.forEach.call(box.querySelectorAll('.np-dd-item'), function(n){ n.classList.remove('active'); });
+      it.classList.add('active');
+      box.classList.remove('open');
+      return;
+    }
+    var dd = e.target.closest('.np-dd');
+    if (dd) {
+      var wasOpen = dd.classList.contains('open');
+      closeAllNpDd();
+      if (!wasOpen) dd.classList.add('open');
+      return;
+    }
+    closeAllNpDd();
+  });
+  document.addEventListener('click', function(e){ if (!e.target.closest('.np-dd')) closeAllNpDd(); });
+  main.addEventListener('input', function(e){
+    if (e.target.classList.contains('np-textarea')) {
+      var max = parseInt(e.target.getAttribute('maxlength'), 10) || 500;
+      var c = e.target.parentNode.querySelector('.np-count');
+      if (c) c.textContent = e.target.value.length + ' / ' + max;
+    }
+  });
+
+  window.openNewProduct = function(){
+    document.getElementById('npMask').classList.add('open');
+    dlg.classList.add('open');
+    main.scrollTop = 0;
+    setActiveStep(NP[0].id);
+  };
+  window.closeNewProduct = function(){
+    document.getElementById('npMask').classList.remove('open');
+    dlg.classList.remove('open');
+    closeAllNpDd();
+  };
+  document.getElementById('npClose').onclick = function(){ window.closeNewProduct(); };
+  document.getElementById('npMask').onclick = function(){ window.closeNewProduct(); };
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape') window.closeNewProduct(); });
+
+  build();
 })();
 </script>
 </body>
