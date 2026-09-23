@@ -1279,7 +1279,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <style>
 .np-mask{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:600;display:none}
 .np-mask.open{display:block}
-.np-dialog{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(1060px,calc(100vw - 48px));height:min(88vh,860px);background:#fff;border-radius:var(--radius-lg);box-shadow:0 16px 48px rgba(0,0,0,.22);z-index:601;display:none;flex-direction:column;overflow:hidden}
+.np-dialog{position:fixed;left:50%;top:50%;transform:translate(-50%,-56%);width:min(1340px,calc(100vw - 56px));height:min(90vh,880px);background:#fff;border-radius:var(--radius-lg);box-shadow:0 16px 48px rgba(0,0,0,.22);z-index:601;display:none;flex-direction:column;overflow:hidden}
 .np-dialog.open{display:flex}
 .np-head{display:flex;align-items:center;gap:12px;padding:20px 26px 16px;border-bottom:1px solid var(--border-light);flex-shrink:0}
 .np-title{font-size:20px;font-weight:600;color:var(--text)}
@@ -1301,16 +1301,16 @@ document.addEventListener('DOMContentLoaded', () => {
 .np-sec-bar{width:3px;height:18px;border-radius:2px;background:var(--primary);flex-shrink:0}
 .np-sec-cn{font-size:17px;font-weight:600;color:var(--text);line-height:1.2;letter-spacing:.2px}
 .np-sec-en{font-size:11px;letter-spacing:.6px;color:var(--text-quaternary);text-transform:uppercase;margin-top:4px}
-.np-grid{display:grid;grid-template-columns:1fr 1fr;column-gap:44px}
+.np-grid{display:grid;grid-template-columns:repeat(3,1fr);column-gap:36px}
 .np-field{display:flex;flex-direction:column;gap:5px;padding:12px 0;border-bottom:1px dotted #e3e5e8;min-width:0}
 .np-field.span2{grid-column:1 / -1}
-.np-group{grid-column:1 / -1;display:grid;column-gap:44px}
+.np-group{grid-column:1 / -1;display:grid;column-gap:36px}
 .np-label{font-size:14px;color:var(--text-secondary);display:flex;align-items:center;gap:4px}
 .np-label .req{color:#ff4d4f;line-height:1}
 .np-input{width:100%;height:36px;border:none;background:transparent;padding:0;font-size:15px;color:var(--text);outline:none;transition:box-shadow .2s}
 .np-input::placeholder{color:var(--text-quaternary)}
 .np-input:focus{box-shadow:inset 0 -1px 0 var(--primary)}
-.np-textarea{height:96px;resize:vertical;line-height:1.6;padding-top:4px}
+.np-textarea{height:84px;resize:vertical;line-height:1.6;padding-top:4px}
 .np-count{font-size:13px;color:var(--text-quaternary);text-align:right}
 .np-inline{display:flex;align-items:center;gap:10px;width:100%}
 .np-inline .np-input{flex:1;min-width:0}
@@ -1336,6 +1336,14 @@ document.addEventListener('DOMContentLoaded', () => {
 .np-upload .plus{font-size:26px;line-height:1;font-weight:300}
 .np-foot{display:flex;align-items:center;justify-content:flex-end;gap:12px;padding:14px 26px;border-top:1px solid var(--border-light);flex-shrink:0}
 .np-foot .btn-default,.np-foot .btn-primary{height:36px;padding:0 20px;font-size:15px}
+/* 必填未填：点确定后该字段区域红色高亮 */
+.np-field.np-invalid{background:rgba(255,77,79,.05);border-radius:var(--radius-md);padding-left:8px;padding-right:8px;border-bottom-color:rgba(255,77,79,.45)}
+.np-field.np-invalid .np-label{color:#ff4d4f}
+.np-field.np-invalid .np-input,
+.np-field.np-invalid .np-dd{box-shadow:inset 0 -1px 0 #ff4d4f}
+.np-field.np-invalid .np-input::placeholder,
+.np-field.np-invalid .np-dd-label{color:#ff7875}
+.np-field.np-invalid .np-seg-item:not(.active){border-color:rgba(255,77,79,.45);color:#ff4d4f}
 </style>
 
 <div class="np-mask" id="npMask"></div>
@@ -1354,7 +1362,7 @@ document.addEventListener('DOMContentLoaded', () => {
   </div>
   <div class="np-foot">
     <button class="btn-default" onclick="closeNewProduct()">取消</button>
-    <button class="btn-primary" onclick="closeNewProduct()">确定</button>
+    <button class="btn-primary" onclick="submitNewProduct()">确定</button>
   </div>
 </div>
 
@@ -1375,20 +1383,17 @@ document.addEventListener('DOMContentLoaded', () => {
       { label: '自定义编码', type: 'text', ph: '请输入' },
       { label: '平台编码', type: 'text', ph: '请输入' },
       { label: '关联商品编码', type: 'text', ph: '请输入' },
-      { label: '商品描述', type: 'textarea', ph: '请输入商品描述', span2: true, max: 500 }
+      { label: '商品描述', type: 'textarea', ph: '请输入商品描述', max: 500 }
     ]},
     { num: '02', id: 'np-spec', cn: '商品规格', en: 'PRODUCT SPECIFICATIONS', fields: [
       { label: '单位', req: true, type: 'seg', opts: ['公制', '英制'], active: 0 },
-      { type: 'blank' },
       { label: '毛重', req: true, type: 'num', ph: '(KG)', unit: 'KG' },
       { label: '净重', type: 'num', ph: '(KG)', unit: 'KG' },
       { label: '尺寸（长 × 宽 × 高）', req: true, type: 'dims', unit: 'CM' },
       { label: '是否含电池', type: 'seg', opts: ['是', '否'], active: 1 },
-      { group: true, cols: 3, fields: [
-        { label: '是否液体', type: 'seg', opts: ['是', '否'], active: 1 },
-        { label: '是否带电', type: 'seg', opts: ['是', '否'], active: 1 },
-        { label: '是否时钟', type: 'seg', opts: ['是', '否'], active: 1 }
-      ]}
+      { label: '是否液体', type: 'seg', opts: ['是', '否'], active: 1 },
+      { label: '是否带电', type: 'seg', opts: ['是', '否'], active: 1 },
+      { label: '是否时钟', type: 'seg', opts: ['是', '否'], active: 1 }
     ]},
     { num: '03', id: 'np-decl', cn: '申报信息', en: 'DECLARATION INFORMATION', fields: [
       { label: '物流申报品名', type: 'text', ph: '请输入' },
@@ -1408,7 +1413,7 @@ document.addEventListener('DOMContentLoaded', () => {
       { label: '税率', type: 'text', ph: '请输入', unit: '%' }
     ]},
     { num: '04', id: 'np-img', cn: '商品图片', en: 'PRODUCT IMAGE', fields: [
-      { type: 'upload', span2: true }
+      { type: 'upload' }
     ]}
   ];
 
@@ -1449,7 +1454,8 @@ document.addEventListener('DOMContentLoaded', () => {
   function fieldHtml(f){
     if (f.type === 'blank') return '<div class="np-field"></div>';
     var label = f.label ? '<div class="np-label">' + (f.req ? '<span class="req">*</span>' : '') + f.label + '</div>' : '';
-    return '<div class="np-field' + (f.span2 ? ' span2' : '') + '">' + label + ctrlHtml(f) + '</div>';
+    var attrs = (f.req ? ' data-req="1"' : '') + (f.type ? ' data-kind="' + f.type + '"' : '');
+    return '<div class="np-field' + (f.span2 ? ' span2' : '') + '"' + attrs + '>' + label + ctrlHtml(f) + '</div>';
   }
 
   function build(){
@@ -1498,6 +1504,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (seg) {
       Array.prototype.forEach.call(seg.parentNode.querySelectorAll('.np-seg-item'), function(b){ b.classList.remove('active'); });
       seg.classList.add('active');
+      var sf = seg.closest('.np-field'); if (sf) sf.classList.remove('np-invalid');
       return;
     }
     var it = e.target.closest('.np-dd-item');
@@ -1508,6 +1515,7 @@ document.addEventListener('DOMContentLoaded', () => {
       Array.prototype.forEach.call(box.querySelectorAll('.np-dd-item'), function(n){ n.classList.remove('active'); });
       it.classList.add('active');
       box.classList.remove('open');
+      var df = box.closest('.np-field'); if (df) df.classList.remove('np-invalid');
       return;
     }
     var dd = e.target.closest('.np-dd');
@@ -1521,6 +1529,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   document.addEventListener('click', function(e){ if (!e.target.closest('.np-dd')) closeAllNpDd(); });
   main.addEventListener('input', function(e){
+    var fld = e.target.closest('.np-field');
+    if (fld) fld.classList.remove('np-invalid');
     if (e.target.classList.contains('np-textarea')) {
       var max = parseInt(e.target.getAttribute('maxlength'), 10) || 500;
       var c = e.target.parentNode.querySelector('.np-count');
@@ -1533,12 +1543,30 @@ document.addEventListener('DOMContentLoaded', () => {
     dlg.classList.add('open');
     main.scrollTop = 0;
     setActiveStep(NP[0].id);
+    Array.prototype.forEach.call(main.querySelectorAll('.np-invalid'), function(el){ el.classList.remove('np-invalid'); });
   };
   window.closeNewProduct = function(){
     document.getElementById('npMask').classList.remove('open');
     dlg.classList.remove('open');
     closeAllNpDd();
   };
+  /* 必填校验：未填字段区域红色高亮、不关闭弹窗，并滚动到第一个未填字段 */
+  function validateRequired(){
+    var firstBad = null;
+    Array.prototype.forEach.call(main.querySelectorAll('.np-field[data-req="1"]'), function(el){
+      var kind = el.getAttribute('data-kind'), ok = true;
+      if (kind === 'dd') ok = !!el.querySelector('.np-dd.has-value');
+      else if (kind === 'seg') ok = !!el.querySelector('.np-seg-item.active');
+      else ok = Array.prototype.every.call(el.querySelectorAll('.np-input'), function(inp){ return inp.value.trim() !== ''; });
+      el.classList.toggle('np-invalid', !ok);
+      if (!ok && !firstBad) firstBad = el;
+    });
+    if (firstBad) {
+      main.scrollTop = Math.min(Math.max(0, firstBad.offsetTop - 90), Math.max(0, main.scrollHeight - main.clientHeight));
+    }
+    return !firstBad;
+  }
+  window.submitNewProduct = function(){ if (validateRequired()) window.closeNewProduct(); };
   document.getElementById('npClose').onclick = function(){ window.closeNewProduct(); };
   document.getElementById('npMask').onclick = function(){ window.closeNewProduct(); };
   document.addEventListener('keydown', function(e){ if (e.key === 'Escape') window.closeNewProduct(); });
